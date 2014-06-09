@@ -1,0 +1,16 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.satansin.android.compath.FeedActivity$PlaceholderFragment" >
+
+    <ListView
+        android:id="@+id/feed_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:dividerHeight="1dp"
+        android:footerDividersEnabled="true"
+        android:headerDividersEnabled="true" >
+    </ListView>
+
+</RelativeLayout>

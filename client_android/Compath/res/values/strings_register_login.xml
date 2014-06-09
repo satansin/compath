@@ -1,0 +1,25 @@
+<resources>
+
+    <string name="title_activity_login">登录</string>
+    <string name="title_activity_register">注册</string>
+
+    <!-- Strings related to login and register -->
+    <string name="prompt_usrname">用户名</string>
+    <string name="prompt_password">密码</string>
+    <string name="prompt_password_confirm">确认密码</string>
+    <string name="action_sign_in">登录</string>
+    <string name="action_register">注册</string>
+    <string name="usrname_reminder">用户名为4~16个字符，可以包含字母数字和下划线</string>
+    <string name="password_reminder">密码为8~16个字符，不可以为纯数字</string>
+    <string name="action_forgot_password">忘记密码</string>
+    <string name="login_progress_signing_in">正在登录</string>
+    <string name="register_progress_registering">正在发送注册请求</string>
+    <string name="login_success">登录成功</string>
+    <string name="register_success">注册成功，请登录</string>
+    <string name="error_invalid_usrname">用户名不正确</string>
+    <string name="error_invalid_password">密码格式不正确</string>
+    <string name="error_incorrect_usrname_password">用户名或密码不正确</string>
+    <string name="error_field_required">该项不能为空</string>
+    <string name="error_repeating_usrname">该用户名已经存在</string>
+
+</resources>
