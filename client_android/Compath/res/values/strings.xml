@@ -35,6 +35,12 @@
     <string name="error_network_timeout">请检查网络连接</string>
     <string name="error_non_loc">无定位</string>
     <string name="error_locating_timeout">定位失败，请手动选择地点</string>
+    
+    <string name="alert_title">确认取消</string>
+    <string name="alert_message">是否取消创建群组？</string>
+    <string name="alert_positive">是</string>
+    <string name="alert_negative">否</string>
+    
 
     <string-array name="province_names">
         <item>北京</item>

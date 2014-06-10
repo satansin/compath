@@ -6,7 +6,7 @@ public class Group {
 	
 	private int id;
 	private String title;
-	private Calendar createTime;
+	private Calendar lastActiveTime;
 	private String ownerName;
 	private int numberOfMembers;
 	private String location;
@@ -15,12 +15,12 @@ public class Group {
 		this(0, "", Calendar.getInstance(), "", 0, "");
 	}
 	
-	public Group(int id, String title, Calendar createTime,
+	public Group(int id, String title, Calendar lastActiveTime,
 			String ownerName, int numberOfMembers, String location) {
 		super();
 		this.id = id;
 		this.title = title;
-		this.createTime = createTime;
+		this.lastActiveTime = lastActiveTime;
 		this.ownerName = ownerName;
 		this.numberOfMembers = numberOfMembers;
 		this.location = location;
@@ -42,12 +42,12 @@ public class Group {
 		this.title = title;
 	}
 	
-	public Calendar getCreateTime() {
-		return createTime;
+	public Calendar getLastActiveTime() {
+		return lastActiveTime;
 	}
 	
-	public void setCreateTime(Calendar createTime) {
-		this.createTime = createTime;
+	public void setLastActiveTime(Calendar createTime) {
+		this.lastActiveTime = createTime;
 	}
 	
 	public String getOwnerName() {

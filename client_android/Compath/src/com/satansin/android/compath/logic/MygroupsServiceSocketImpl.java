@@ -6,10 +6,8 @@ import java.util.List;
 
 public class MygroupsServiceSocketImpl implements MygroupsService {
 
-	private ArrayList<Group> resultList;
-
 	public List<Group> getMygroupsList1() {
-		resultList = new ArrayList<Group>();
+		ArrayList<Group> resultList = new ArrayList<Group>();
 		resultList.add(new Group(4, "怎么去附近的景点", Calendar.getInstance(), "S先生",
 				3, "五台山"));
 		return resultList;
@@ -17,7 +15,7 @@ public class MygroupsServiceSocketImpl implements MygroupsService {
 
 	public List<Group> getMygroupsList() throws NetworkTimeoutException,
 			UnknownErrorException {
-		resultList = new ArrayList<Group>();
+		ArrayList<Group> resultList = new ArrayList<Group>();
 		String msg = SocketMessageAnalyzer
 				.getSendingMsg(SocketMessageAnalyzer.ASK_FOR_MYGROUPS);
 		SocketConnector connector = new SocketConnector();

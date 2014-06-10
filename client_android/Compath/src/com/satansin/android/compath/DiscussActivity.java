@@ -156,7 +156,7 @@ public class DiscussActivity extends ActionBarActivity {
 							public void run() {
 								for (Message message : newMessages) {
 									appendMessage(message, listView.getLastVisiblePosition() == listView.getCount() - 1);
-									memoryService.insertMessage(message);
+									memoryService.insertMessage(message, false);
 								}
 							}
 						});
@@ -178,11 +178,13 @@ public class DiscussActivity extends ActionBarActivity {
 				return;
 			}
 			inputEditText.setText("");
-			Message message = memoryService.insertSendingMessage(text);
+			Message message = memoryService.insertMessage(text, false);
 			appendMessage(message, true);
 			
 			MessageSendingTask messageSendingTask = new MessageSendingTask();
 			messageSendingTask.execute(message);
+			
+			// TODO update sending status in SQLite
 		}
 		
 		private void appendMessage(Message newMessage, boolean rollToBottom) {

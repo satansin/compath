@@ -8,9 +8,9 @@ public interface MemoryService {
 
 	public List<Message> loadHistoryMessage(int groupId);
 
-	public Message insertSendingMessage(String text);
+	public Message insertMessage(String text, boolean isComingMsg);
 
-	public void insertMessage(Message message);
+	public Message insertMessage(Message message, boolean isComingMsg);
 
 	public String getMyUsrname();
 

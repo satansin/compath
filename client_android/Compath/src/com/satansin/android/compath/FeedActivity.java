@@ -337,7 +337,7 @@ public class FeedActivity extends ActionBarActivity {
 				HashMap<String, Object> map = new HashMap<String, Object>();
 				map.put(UI_FEED_ITEM_ICON, R.drawable.test_icon); // TODO Í¼Æ¬´æ·Å
 				map.put(UI_FEED_ITEM_USRNAME, group.getOwnerName());
-				map.put(UI_FEED_ITEM_TIME, new UITimeGenerator().getUITime(group.getCreateTime()));
+				map.put(UI_FEED_ITEM_TIME, new UITimeGenerator().getUITime(group.getLastActiveTime()));
 				map.put(UI_FEED_ITEM_TITLE, group.getTitle());
 				map.put(UI_FEED_ITEM_NUMBER_OF_MEMBERS, group.getNumberOfMembers());
 				feedList.add(map);

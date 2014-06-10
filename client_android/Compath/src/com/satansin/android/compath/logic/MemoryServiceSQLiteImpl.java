@@ -17,14 +17,14 @@ public class MemoryServiceSQLiteImpl implements MemoryService {
 	}
 
 	@Override
-	public Message insertSendingMessage(String text) {
-		return new Message(0, text, Calendar.getInstance(), false, "Mr");
+	public Message insertMessage(String text, boolean isComingMsg) {
+		return new Message(0, text, Calendar.getInstance(), isComingMsg, "Mr");
 	}
 
 	@Override
-	public void insertMessage(Message message) {
+	public Message insertMessage(Message message, boolean isComingMsg) {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
 
 	@Override
