@@ -4,9 +4,11 @@
     <string name="app_name">Compath</string>
     
     <string name="discuss_input_hint"></string>
+    <string name="image_content_description"></string>
     <string name="discuss_sending_text">发送</string>
     <string name="hint_group_title">输入群组标题，最多30个字</string>
     <string name="mygroups_personal_settings">我的群组</string>
+    <string name="favorite_groups_personal_settings">收藏的群组</string>
     <string name="finish_selection">完成</string>
     
     <string name="title_activity_feed">Compath</string>
@@ -19,9 +21,11 @@
     <string name="title_activity_mygroups">我的群组</string>
     <string name="title_activity_group_creation">创建群组</string>
     <string name="title_activity_city_selection">选择城市</string>
+    <string name="title_activity_favorite_groups">收藏的群组</string>
     
     <string name="action_location_selection">选择地点</string>
     <string name="action_favor">收藏</string>
+    <string name="action_cancel_favor">取消收藏</string>
     <string name="action_settings">设置</string>
     <string name="action_personal_settings">个人设置</string>
     <string name="action_create_group">创建群组</string>
@@ -30,11 +34,14 @@
     
     <string name="success_create">创建成功</string>
     <string name="success_favor">收藏成功</string>
+    <string name="success_cancel">取消成功</string>
     
-    <string name="error_create_fail">创建失败，请重试</string>
-    <string name="error_favor_fail">收藏失败，请重试</string>
-    <string name="error_set_fail">设置失败，请重试</string>
-    <string name="error_unknown">出现未知错误，请重试</string>
+    <string name="error_create_fail_retry">创建失败，请重试</string>
+    <string name="error_favor_fail_retry">收藏失败，请重试</string>
+    <string name="error_set_fail_retry">设置失败，请重试</string>
+    <string name="error_cancel_fail_retry"></string>
+    <string name="error_unknown_retry">出现未知错误，请重试</string>
+    <string name="error_unknown">出现未知错误</string>
     <string name="error_network_timeout">请检查网络连接</string>
     <string name="error_non_loc">无定位</string>
     <string name="error_locating_timeout">定位失败，请手动选择地点</string>
@@ -45,7 +52,6 @@
     <string name="alert_message">是否取消创建群组？</string>
     <string name="alert_positive">是</string>
     <string name="alert_negative">否</string>
-    
 
     <string-array name="province_names">
         <item>北京</item>

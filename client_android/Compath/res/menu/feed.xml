@@ -2,12 +2,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.satansin.android.compath.FeedActivity" >
-
-    <item
-        android:id="@+id/action_personal_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_personal_settings"
-        app:showAsAction="ifRoom"/>
     
     <item
         android:id="@+id/action_location_selection"
@@ -26,5 +20,11 @@
         android:orderInCategory="100"
         android:title="@string/action_refresh"
         android:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_personal_settings"
+        android:orderInCategory="100"
+        android:title="@string/action_personal_settings"
+        app:showAsAction="ifRoom"/>
 
 </menu>

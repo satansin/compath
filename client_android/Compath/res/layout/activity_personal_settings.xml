@@ -12,6 +12,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginLeft="46dp"
         android:layout_marginTop="35dp"
+        android:contentDescription="@string/image_content_description"
         android:src="@drawable/test_icon" />
 
     <TextView
@@ -53,6 +54,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_marginRight="20dp"
+            android:contentDescription="@string/image_content_description"
             android:scaleType="fitCenter"
             android:src="@drawable/setting_arrow" />
     </RelativeLayout>
@@ -68,6 +70,41 @@
         android:layout_width="fill_parent"
         android:layout_height="1px"
         android:layout_alignBottom="@+id/mygroups_relative_layout"
+        android:background="#ccc" >
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/favorite_groups_relative_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/mygroups_relative_layout"
+        android:paddingBottom="15dp"
+        android:paddingTop="15dp" >
+
+        <TextView
+            android:id="@+id/favorite_groups_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/favorite_groups_arrow"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="36dp"
+            android:text="@string/favorite_groups_personal_settings" />
+
+        <ImageView
+            android:id="@+id/favorite_groups_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="20dp"
+            android:contentDescription="@string/image_content_description"
+            android:scaleType="fitCenter"
+            android:src="@drawable/setting_arrow" />
+    </RelativeLayout>
+    
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="1px"
+        android:layout_alignBottom="@+id/favorite_groups_relative_layout"
         android:background="#ccc" >
     </LinearLayout>
 

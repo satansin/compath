@@ -3,6 +3,7 @@ package com.satansin.android.compath;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.satansin.android.compath.logic.GroupParticipationService;
 import com.satansin.android.compath.logic.MemoryService;
 import com.satansin.android.compath.logic.Message;
 import com.satansin.android.compath.logic.MessageService;
@@ -16,6 +17,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.TimeUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,6 +36,8 @@ public class DiscussActivity extends ActionBarActivity {
 	public static final String EXTRA_DISCUSS_GROUP_ID = "com.satansin.android.compath.DISCUSS_ID";
 
 	private int groupId;
+	
+	private Menu menu;
 
 	private EditText inputEditText;
 	private ListView listView;
@@ -41,10 +45,10 @@ public class DiscussActivity extends ActionBarActivity {
 	private List<Message> messageList;
 	private MessageAdapter messageAdapter;
 
-	private MessageService messageService = ServiceFactory
-			.getMessageService();
-	private MemoryService memoryService = ServiceFactory
-			.getMemoryService();
+	private MessageService messageService = ServiceFactory.getMessageService();
+	private MemoryService memoryService = ServiceFactory.getMemoryService();
+	
+	private boolean hasFavored = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +56,7 @@ public class DiscussActivity extends ActionBarActivity {
 		setContentView(R.layout.activity_discuss);
 
 		if (!getIntent().hasExtra(EXTRA_DISCUSS_GROUP_ID)) {
-			Toast.makeText(getApplicationContext(), R.string.error_unknown,
+			Toast.makeText(getApplicationContext(), R.string.error_unknown_retry,
 					Toast.LENGTH_SHORT).show();
 			DiscussActivity.this.finish();
 		}
@@ -74,6 +78,7 @@ public class DiscussActivity extends ActionBarActivity {
 					}
 				});
 
+		// thread to receive the messages
 		new Thread() {
 			@Override
 			public void run() {
@@ -84,10 +89,10 @@ public class DiscussActivity extends ActionBarActivity {
 						@Override
 						public void run() {
 							for (Message message : newMessages) {
+								message = memoryService.insertMessage(message, false);
 								appendMessage(message, listView
 										.getLastVisiblePosition() == listView
 										.getCount() - 1);
-								memoryService.insertMessage(message, false);
 							}
 						}
 					});
@@ -100,7 +105,9 @@ public class DiscussActivity extends ActionBarActivity {
 			}
 		}.start();
 		
-		// TODO no-reply: entering the group
+		new EnterGroupTask().execute();
+		
+		new CheckGroupFavoredTask().execute();
 
 	}
 
@@ -108,6 +115,7 @@ public class DiscussActivity extends ActionBarActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.discuss, menu);
+		this.menu = menu;
 		return true;
 	}
 
@@ -118,12 +126,23 @@ public class DiscussActivity extends ActionBarActivity {
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		if (id == R.id.action_favor) {
-			new FavorGroupTask().execute();
+			if (hasFavored) {
+				new CancelFavorGroupTask().execute();
+			} else {
+				new FavorGroupTask().execute();
+			}
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
+	@Override
+	public void finish() {
+		// TODO right to do like this?
+		new ExitGroupTask().execute();
+		super.finish();
+	}
+	
 	private void attemptSending() {
 		String text = inputEditText.getText().toString();
 		if (text.length() == 0) {
@@ -185,8 +204,7 @@ public class DiscussActivity extends ActionBarActivity {
 			boolean showTimeTag = true;
 			if (position > 0) {
 				Message previousMessage = (Message) getItem(position);
-				if (message.getTime().getTimeInMillis()
-						- previousMessage.getTime().getTimeInMillis() < MINIMUM_SHOWING_TIMETAG_DIFF_IN_MILLIS) {
+				if (message.getTime() - previousMessage.getTime() < MINIMUM_SHOWING_TIMETAG_DIFF_IN_MILLIS) {
 					showTimeTag = false;
 				}
 			}
@@ -216,8 +234,7 @@ public class DiscussActivity extends ActionBarActivity {
 			convertView.setTag(viewHolder);
 
 			if (showTimeTag) {
-				viewHolder.timeTextView.setText(new UITimeGenerator()
-						.getUITime(message.getTime()));
+				viewHolder.timeTextView.setText(new UITimeGenerator().getFormattedMessageTime(message.getTime()));
 			}
 			if (message.isComingMsg()) {
 				viewHolder.usrnameTextView.setText(message.getFrom());
@@ -230,21 +247,50 @@ public class DiscussActivity extends ActionBarActivity {
 	}
 
 	private class EnterGroupTask extends AsyncTask<Void, Void, Boolean> {
-
+		private Exception exception;
+		
 		@Override
 		protected Boolean doInBackground(Void... params) {
-			// TODO Auto-generated method stub
-			return null;
+			GroupParticipationService groupParticipationService = ServiceFactory.getGroupParticipationService();
+			boolean entered = false;
+			try {
+				entered = groupParticipationService.enter(groupId);
+			} catch (NetworkTimeoutException e) {
+				exception = (NetworkTimeoutException) e;
+			} catch (UnknownErrorException e) {
+				exception = (UnknownErrorException) e;
+			}
+			return entered;
+		}
+		
+		@Override
+		protected void onPostExecute(final Boolean success) {
+			if (exception != null) {
+				if (exception instanceof NetworkTimeoutException) {
+					Toast.makeText(getApplicationContext(),
+							R.string.error_network_timeout, Toast.LENGTH_SHORT)
+							.show();
+					return;
+				} else if (exception instanceof UnknownErrorException) {
+					Toast.makeText(getApplicationContext(),
+							R.string.error_unknown, Toast.LENGTH_SHORT).show();
+					return;
+				}
+			}
 		}
 		
 	}
 	
-	private class ExitGroupTask extends AsyncTask<Void, Void, Boolean> {
+	private class ExitGroupTask extends AsyncTask<Void, Void, Void> {
 
 		@Override
-		protected Boolean doInBackground(Void... params) {
-			// TODO Auto-generated method stub
-			return null;
+		protected Void doInBackground(Void... params) {
+			GroupParticipationService groupParticipationService = ServiceFactory.getGroupParticipationService();
+			try {
+				groupParticipationService.exit(groupId);
+			} catch (NetworkTimeoutException | UnknownErrorException e) {
+			}
+			return ((Void) null);
 		}
 		
 	}
@@ -302,19 +348,86 @@ public class DiscussActivity extends ActionBarActivity {
 					return;
 				} else if (exception instanceof UnknownErrorException) {
 					Toast.makeText(getApplicationContext(),
-							R.string.error_unknown, Toast.LENGTH_SHORT).show();
+							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				}
 			}
 
 			if (success) {
-				Toast.makeText(getApplicationContext(), R.string.success_favor,
-						Toast.LENGTH_SHORT).show();
-				// TODO change the text of favor into cancel favor
+//				Toast.makeText(getApplicationContext(), R.string.success_favor,
+//						Toast.LENGTH_SHORT).show();
+				menu.findItem(R.id.action_favor).setTitle(getString(R.string.action_cancel_favor));
+				DiscussActivity.this.hasFavored = true;
 			} else {
 				Toast.makeText(getApplicationContext(),
-						R.string.error_favor_fail, Toast.LENGTH_SHORT).show();
+						R.string.error_favor_fail_retry, Toast.LENGTH_SHORT).show();
 			}
+		}
+	}
+	
+	private class CancelFavorGroupTask extends AsyncTask<Void, Void, Boolean> {
+		private Exception exception;
+
+		@Override
+		protected Boolean doInBackground(Void... params) {
+			MygroupsService mygroupsService = ServiceFactory
+					.getMygroupsService();
+			boolean cancelled = false;
+			try {
+				cancelled = mygroupsService.removeFromFavor(groupId);
+			} catch (NetworkTimeoutException e) {
+				exception = (NetworkTimeoutException) e;
+			} catch (UnknownErrorException e) {
+				exception = (UnknownErrorException) e;
+			}
+			return cancelled;
+		}
+
+		@Override
+		protected void onPostExecute(final Boolean success) {
+			if (exception != null) {
+				if (exception instanceof NetworkTimeoutException) {
+					Toast.makeText(getApplicationContext(),
+							R.string.error_network_timeout, Toast.LENGTH_SHORT)
+							.show();
+					return;
+				} else if (exception instanceof UnknownErrorException) {
+					Toast.makeText(getApplicationContext(),
+							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
+					return;
+				}
+			}
+
+			if (success) {
+//				Toast.makeText(getApplicationContext(), R.string.success_cancel_favor,
+//						Toast.LENGTH_SHORT).show();
+				menu.findItem(R.id.action_favor).setTitle(getString(R.string.action_cancel_favor));
+				DiscussActivity.this.hasFavored = false;
+			} else {
+				Toast.makeText(getApplicationContext(),
+						R.string.error_cancel_fail_retry, Toast.LENGTH_SHORT).show();
+			}
+		}
+	}
+	
+	private class CheckGroupFavoredTask extends AsyncTask<Void, Void, Boolean> {
+		@Override
+		protected Boolean doInBackground(Void... params) {
+			MygroupsService mygroupsService = ServiceFactory.getMygroupsService();
+			boolean hasFavored = false;
+			try {
+				hasFavored = mygroupsService.getGroupFavorStatus(groupId);
+			} catch (NetworkTimeoutException | UnknownErrorException e) {
+			}
+			return hasFavored;
+		}
+
+		@Override
+		protected void onPostExecute(final Boolean hasFavored) {
+			if (hasFavored) {
+				menu.findItem(R.id.action_favor).setTitle(getString(R.string.action_cancel_favor));
+			}
+			DiscussActivity.this.hasFavored = hasFavored;
 		}
 	}
 

@@ -9,5 +9,9 @@ public interface MygroupsService {
 	public List<Group> getMyFavoriteList() throws NetworkTimeoutException, UnknownErrorException;
 
 	public boolean favorGroup(int groupId) throws NetworkTimeoutException, UnknownErrorException;
+	
+	public boolean removeFromFavor(int groupId) throws NetworkTimeoutException, UnknownErrorException;
+
+	public boolean getGroupFavorStatus(int groupId) throws NetworkTimeoutException, UnknownErrorException;
 
 }

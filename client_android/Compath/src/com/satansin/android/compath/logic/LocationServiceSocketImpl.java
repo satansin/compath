@@ -26,7 +26,7 @@ public class LocationServiceSocketImpl implements LocationService {
 		if (SocketMessageAnalyzer.getMsgType(result) == SocketMessageAnalyzer.LOCATION) {
 			location = (Location) SocketMessageAnalyzer
 					.getBeanFromSocketMessage(SocketMessageAnalyzer
-							.getMsgContent(result, "location"));
+							.getMsgContent(result, "location"), SocketMessageAnalyzer.BEAN_LOCATION);
 		} else {
 			throw new UnknownErrorException();
 		}

@@ -244,7 +244,7 @@ public class FeedActivity extends ActionBarActivity {
 					.findViewById(R.id.feed_list_view);
 			feedList = new ArrayList<HashMap<String, Object>>();
 			feedAdapter = new SimpleAdapter(getActivity(), feedList,
-					R.layout.feed_item,
+					R.layout.group_item_feed,
 					new String[] { UI_FEED_ITEM_ICON, UI_FEED_ITEM_USRNAME,
 							UI_FEED_ITEM_TIME, UI_FEED_ITEM_TITLE,
 							UI_FEED_ITEM_NUMBER_OF_MEMBERS }, new int[] {
@@ -295,7 +295,7 @@ public class FeedActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof UnknownErrorException) {
-					Toast.makeText(getApplicationContext(), R.string.error_unknown, Toast.LENGTH_SHORT).show();
+					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				}
 			}
@@ -332,7 +332,7 @@ public class FeedActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof UnknownErrorException) {
-					Toast.makeText(getApplicationContext(), R.string.error_unknown, Toast.LENGTH_SHORT).show();
+					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				}
 			}
@@ -345,7 +345,7 @@ public class FeedActivity extends ActionBarActivity {
 				HashMap<String, Object> map = new HashMap<String, Object>();
 				map.put(UI_FEED_ITEM_ICON, R.drawable.test_icon); // TODO Í¼Æ¬´æ·Å
 				map.put(UI_FEED_ITEM_USRNAME, group.getOwnerName());
-				map.put(UI_FEED_ITEM_TIME, new UITimeGenerator().getUITime(group.getLastActiveTime()));
+				map.put(UI_FEED_ITEM_TIME, new UITimeGenerator().getFormattedFeedTime(group.getLastActiveTime()));
 				map.put(UI_FEED_ITEM_TITLE, group.getTitle());
 				map.put(UI_FEED_ITEM_NUMBER_OF_MEMBERS, group.getNumberOfMembers());
 				feedList.add(map);

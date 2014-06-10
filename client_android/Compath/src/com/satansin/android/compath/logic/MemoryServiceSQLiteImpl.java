@@ -18,7 +18,7 @@ public class MemoryServiceSQLiteImpl implements MemoryService {
 
 	@Override
 	public Message insertMessage(String text, boolean isComingMsg) {
-		return new Message(0, text, Calendar.getInstance(), isComingMsg, "Mr");
+		return new Message(0, text, Calendar.getInstance().getTimeInMillis(), isComingMsg, "Mr");
 	}
 
 	@Override

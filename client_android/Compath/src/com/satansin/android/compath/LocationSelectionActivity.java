@@ -193,7 +193,7 @@ public class LocationSelectionActivity extends ActionBarActivity {
 						Toast.makeText(getActivity().getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
 						return;
 					} else if (exception instanceof UnknownErrorException) {
-						Toast.makeText(getActivity().getApplicationContext(), R.string.error_unknown, Toast.LENGTH_SHORT).show();
+						Toast.makeText(getActivity().getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 						return;
 					}
 				}

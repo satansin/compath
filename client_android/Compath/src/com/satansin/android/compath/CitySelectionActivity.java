@@ -123,7 +123,7 @@ public class CitySelectionActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof UnknownErrorException) {
-					Toast.makeText(getApplicationContext(), R.string.error_unknown, Toast.LENGTH_SHORT).show();
+					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				}
 			}
@@ -131,7 +131,7 @@ public class CitySelectionActivity extends ActionBarActivity {
 			if (succeed) {
 				finishCitySelection();
 			} else {
-				Toast.makeText(getApplicationContext(), R.string.error_set_fail, Toast.LENGTH_SHORT).show();
+				Toast.makeText(getApplicationContext(), R.string.error_set_fail_retry, Toast.LENGTH_SHORT).show();
 			}
 		}
 		

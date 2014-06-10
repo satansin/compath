@@ -8,7 +8,7 @@ public class MygroupsServiceSocketImpl implements MygroupsService {
 
 	public List<Group> getMygroupsList1() {
 		ArrayList<Group> resultList = new ArrayList<Group>();
-		resultList.add(new Group(4, "怎么去附近的景点", Calendar.getInstance(), "S先生",
+		resultList.add(new Group(4, "怎么去附近的景点", Calendar.getInstance().getTimeInMillis(), "S先生",
 				3, "五台山"));
 		return resultList;
 	}
@@ -30,7 +30,34 @@ public class MygroupsServiceSocketImpl implements MygroupsService {
 					result, "mygroups");
 			for (String content : contents) {
 				resultList.add((Group) SocketMessageAnalyzer
-						.getBeanFromSocketMessage(content));
+						.getBeanFromSocketMessage(content, SocketMessageAnalyzer.BEAN_GROUP));
+			}
+		} else {
+			throw new UnknownErrorException();
+		}
+
+		return resultList;
+	}
+
+	@Override
+	public List<Group> getMyFavoriteList() throws NetworkTimeoutException,
+			UnknownErrorException {
+		ArrayList<Group> resultList = new ArrayList<Group>();
+		String msg = SocketMessageAnalyzer
+				.getSendingMsg(SocketMessageAnalyzer.ASK_FOR_FAVORITE_GROUPS);
+		SocketConnector connector = new SocketConnector();
+		String result = connector.send(msg, 8000);
+
+		if (result == null) {
+			throw new NetworkTimeoutException();
+		}
+
+		if (SocketMessageAnalyzer.getMsgType(result) == SocketMessageAnalyzer.FAVORITE_GROUPS) {
+			String[] contents = SocketMessageAnalyzer.getMsgArrayContents(
+					result, "favorite_groups");
+			for (String content : contents) {
+				resultList.add((Group) SocketMessageAnalyzer
+						.getBeanFromSocketMessage(content, SocketMessageAnalyzer.BEAN_GROUP));
 			}
 		} else {
 			throw new UnknownErrorException();
@@ -66,10 +93,57 @@ public class MygroupsServiceSocketImpl implements MygroupsService {
 	}
 
 	@Override
-	public List<Group> getMyFavoriteList() throws NetworkTimeoutException,
+	public boolean removeFromFavor(int groupId) throws NetworkTimeoutException,
 			UnknownErrorException {
-		// TODO Auto-generated method stub
-		return null;
+		boolean removed = false;
+		String msg = SocketMessageAnalyzer.getSendingMsg(
+				SocketMessageAnalyzer.ASK_FOR_GROUP_FAVOR_REMOVING,
+				new String[] { "group_id" },
+				new String[] { String.valueOf(groupId) });
+		SocketConnector connector = new SocketConnector();
+		String result = connector.send(msg, 3000);
+		
+		if (result == null) {
+			throw new NetworkTimeoutException();
+		}
+
+		if (SocketMessageAnalyzer.getMsgType(result) == SocketMessageAnalyzer.FAVOR_GROUP_REMOVED) {
+			String content = SocketMessageAnalyzer.getMsgContent(result, "removed");
+			if (content.equals("true")) {
+				removed = true;
+			} // TODO error handling
+		} else {
+			throw new UnknownErrorException();
+		}
+
+		return removed;
+	}
+
+	@Override
+	public boolean getGroupFavorStatus(int groupId) throws NetworkTimeoutException,
+			UnknownErrorException {
+		boolean hasFavored = false;
+		String msg = SocketMessageAnalyzer.getSendingMsg(
+				SocketMessageAnalyzer.ASK_FOR_GROUP_FAVOR_STATUS,
+				new String[] { "group_id" },
+				new String[] { String.valueOf(groupId) });
+		SocketConnector connector = new SocketConnector();
+		String result = connector.send(msg, 3000);
+		
+		if (result == null) {
+			throw new NetworkTimeoutException();
+		}
+
+		if (SocketMessageAnalyzer.getMsgType(result) == SocketMessageAnalyzer.GROUP_FAVOR_STATE) {
+			String content = SocketMessageAnalyzer.getMsgContent(result, "has_favored");
+			if (content.equals("true")) {
+				hasFavored = true;
+			} // TODO error handling
+		} else {
+			throw new UnknownErrorException();
+		}
+
+		return hasFavored;
 	}
 
 }

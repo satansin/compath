@@ -1,20 +1,18 @@
 package com.satansin.android.compath.logic;
 
-import java.util.Calendar;
-
 public class Message {
 	
 	private int id;
 	private String content;
-	private Calendar time;
+	private long time;
 	private boolean isComingMsg;
 	private String from;
 	
 	public Message() {
-		this(0, "", Calendar.getInstance(), false, "");
+		this(0, "", 0, false, "");
 	}
 	
-	public Message(int id, String content, Calendar time, boolean isComingMsg, String from) {
+	public Message(int id, String content, long time, boolean isComingMsg, String from) {
 		super();
 		this.id = id;
 		this.content = content;
@@ -39,11 +37,11 @@ public class Message {
 		this.content = content;
 	}
 
-	public Calendar getTime() {
+	public long getTime() {
 		return time;
 	}
 
-	public void setTime(Calendar time) {
+	public void setTime(long time) {
 		this.time = time;
 	}
 

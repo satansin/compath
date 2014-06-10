@@ -1,21 +1,19 @@
 package com.satansin.android.compath.logic;
 
-import java.util.Calendar;
-
 public class Group {
 	
 	private int id;
 	private String title;
-	private Calendar lastActiveTime;
+	private long lastActiveTime;
 	private String ownerName;
 	private int numberOfMembers;
 	private String location;
 
 	public Group() {
-		this(0, "", Calendar.getInstance(), "", 0, "");
+		this(0, "", 0, "", 0, "");
 	}
 	
-	public Group(int id, String title, Calendar lastActiveTime,
+	public Group(int id, String title, long lastActiveTime,
 			String ownerName, int numberOfMembers, String location) {
 		super();
 		this.id = id;
@@ -42,11 +40,11 @@ public class Group {
 		this.title = title;
 	}
 	
-	public Calendar getLastActiveTime() {
+	public long getLastActiveTime() {
 		return lastActiveTime;
 	}
 	
-	public void setLastActiveTime(Calendar createTime) {
+	public void setLastActiveTime(long createTime) {
 		this.lastActiveTime = createTime;
 	}
 	

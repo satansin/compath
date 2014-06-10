@@ -240,7 +240,7 @@ public class LoginActivity extends ActionBarActivity {
 					return;
 				} else if (exception instanceof UnknownErrorException) {
 					Toast.makeText(getApplicationContext(),
-							R.string.error_unknown, Toast.LENGTH_SHORT).show();
+							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				}
 			}
@@ -251,7 +251,7 @@ public class LoginActivity extends ActionBarActivity {
 						session);
 				if (!sessionWritten) {
 					Toast.makeText(getApplicationContext(),
-							R.string.error_unknown, Toast.LENGTH_SHORT).show();
+							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				}
 				if (loginService.isFirstLogin()) {

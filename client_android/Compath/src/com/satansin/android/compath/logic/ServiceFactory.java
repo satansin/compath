@@ -38,4 +38,8 @@ public class ServiceFactory {
 		return new GroupCreationServiceSocketImpl();
 	}
 
+	public static GroupParticipationService getGroupParticipationService() {
+		return new GroupParticipationServiceSocketImpl();
+	}
+
 }

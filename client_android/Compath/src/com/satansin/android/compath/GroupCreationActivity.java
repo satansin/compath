@@ -111,11 +111,12 @@ public class GroupCreationActivity extends ActionBarActivity {
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			AlertDialog cancelAlertDialog = new AlertDialog.Builder(getApplicationContext()).create();
+			AlertDialog cancelAlertDialog = new AlertDialog.Builder(this).create();
 			cancelAlertDialog.setTitle(getString(R.string.alert_title));
 			cancelAlertDialog.setMessage(getString(R.string.alert_message));
 			cancelAlertDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.alert_positive), cancelDialogListener);
 			cancelAlertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.alert_negative), cancelDialogListener);
+			cancelAlertDialog.show();
 		}
 		return true;
 	}
@@ -168,7 +169,7 @@ public class GroupCreationActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof UnknownErrorException) {
-					Toast.makeText(getApplicationContext(), R.string.error_unknown, Toast.LENGTH_SHORT).show();
+					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				}
 			}
@@ -177,7 +178,7 @@ public class GroupCreationActivity extends ActionBarActivity {
 				Toast.makeText(getApplicationContext(), R.string.success_create, Toast.LENGTH_SHORT).show();
 				finishGroupCreation(groupCreationService.getNewCreatedGroupId());
 			} else {
-				Toast.makeText(getApplicationContext(), R.string.error_create_fail, Toast.LENGTH_SHORT).show();
+				Toast.makeText(getApplicationContext(), R.string.error_create_fail_retry, Toast.LENGTH_SHORT).show();
 			}
 		}
 

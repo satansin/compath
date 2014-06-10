@@ -76,6 +76,35 @@ public class SocketMessageAnalyzer {
 	 * 	"session":"difhso"}
 	 */
 	public static final int ASK_FOR_GROUP_CREATING = 110;
+	/**
+	 * {"opcode":"111",
+	 * 	"session":"dfisojf88d"}
+	 */
+	public static final int ASK_FOR_FAVORITE_GROUPS = 111;
+	/**
+	 * {"opcode":"112",
+	 * 	"group_id":"6352",
+	 * 	"session":"dfisojf88d"}
+	 */
+	public static final int ASK_FOR_GROUP_FAVOR_REMOVING = 112;
+	/**
+	 * {"opcode":"113",
+	 * 	"group_id":"6352",
+	 * 	"session":"dfisojf88d"}
+	 */
+	public static final int ASK_FOR_GROUP_ENTERING = 113;
+	/**
+	 * {"opcode":"114",
+	 * 	"group_id":"6352",
+	 * 	"session":"dfisojf88d"}
+	 */
+	public static final int ASK_FOR_GROUP_EXITING = 114;
+	/**
+	 * {"opcode":"115",
+	 * 	"group_id":"6352",
+	 * 	"session":"dfisojf88d"}
+	 */
+	public static final int ASK_FOR_GROUP_FAVOR_STATUS = 115;
 	
 	// return type codes
 	/**
@@ -152,10 +181,46 @@ public class SocketMessageAnalyzer {
 	 * 	"new_id":"36273"}
 	 */
 	public static final int GROUP_CREATED = 210;
+	/**
+	 * {"type":"211",
+	 * 	"favorite_groups":[
+	 * 		{"id":"53723",
+	 * 		 "title":"How to get there",
+	 * 		 "last_active_time":"3623627342734(in millisecond)",
+	 * 		 "owner_name":"MrJie",
+	 * 		 "number_of_members":"53",
+	 * 		 "location_name":"Street No 5"},
+	 * 		...(没有的话数组长度0)]}
+	 */
+	public static final int FAVORITE_GROUPS = 211;
+	/**
+	 * {"type":"212",
+	 * 	"removed":"true/false"}
+	 */
+	public static final int FAVOR_GROUP_REMOVED = 212;
+	/**
+	 * {"type":"213",
+	 * 	"entered":"true/false"}
+	 */
+	public static final int GROUP_ENTERED = 213;
+	/**
+	 * {"type":"214",
+	 * 	"exited":"true/false"}
+	 */
+	public static final int GROUP_EXITED = 214;
+	/**
+	 * {"type":"215",
+	 * 	"has_favored":"true/false"}
+	 */
+	public static final int GROUP_FAVOR_STATE = 215;
 	
 	private static final String OPCODE_KEY = "opcode";
 	private static final String SESSION_KEY = "session";
 	private static final String RETURN_TYPE = "type";
+	
+	public static final int BEAN_GROUP = 0;
+	public static final int BEAN_MESSAGE = 1;
+	public static final int BEAN_LOCATION = 2;
 	
 	private static MemoryService memoryService = ServiceFactory.getMemoryService();
 	
@@ -224,9 +289,33 @@ public class SocketMessageAnalyzer {
 		return result;
 	}
 
-	public static Object getBeanFromSocketMessage(String content) {
-		// TODO Auto-generated method stub
-		return null;
+	public static Object getBeanFromSocketMessage(String content, int beanType) {
+		switch (beanType) {
+		case BEAN_GROUP:
+			Group group = new Group();
+			group.setId(Integer.parseInt(getMsgContent(content, "id")));
+			group.setLastActiveTime(Long.parseLong(getMsgContent(content, "last_active_time")));
+			group.setLocation(getMsgContent(content, "location_name"));
+			group.setNumberOfMembers(Integer.parseInt(getMsgContent(content, "number_of_members")));
+			group.setOwnerName(getMsgContent(content, "owner_name"));
+			group.setTitle(getMsgContent(content, "title"));
+			return group;
+		case BEAN_LOCATION:
+			Location location = new Location();
+			location.setId(getMsgContent(content, "id"));
+			location.setLatitude(Integer.parseInt(getMsgContent(content, "latitude")));
+			location.setLongitude(Integer.parseInt(getMsgContent(content, "longitude")));
+			location.setName(getMsgContent(content, "name"));
+			return location;
+		case BEAN_MESSAGE:
+			Message message = new Message();
+			message.setContent(getMsgContent(content, "content"));
+			message.setFrom(getMsgContent(content, "from"));
+			message.setTime(Long.parseLong(getMsgContent(content, "time")));
+			return message;
+		default:
+			return null;
+		}
 	}
 
 }

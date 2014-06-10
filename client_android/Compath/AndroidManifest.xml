@@ -115,9 +115,14 @@
         <activity
             android:name="com.satansin.android.compath.GroupCreationActivity"
             android:label="@string/title_activity_group_creation" >
+        </activity>
+        <activity
+            android:name="com.satansin.android.compath.FavoriteGroupsActivity"
+            android:label="@string/title_activity_favorite_groups"
+            android:parentActivityName="com.satansin.android.compath.PersonalSettingsActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.satansin.android.compath.FeedActivity" />
+                android:value="com.satansin.android.compath.PersonalSettingsActivity" />
         </activity>
     </application>
 

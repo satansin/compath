@@ -10,13 +10,13 @@ public class FeedServiceSocketImpl implements FeedService {
 
 	public List<Group> getGroupListByLocationId1(String locationId) {
 		resultList = new ArrayList<Group>();
-		resultList.add(new Group(1, "五台山体育馆演唱会", Calendar.getInstance(),
+		resultList.add(new Group(1, "五台山体育馆演唱会", Calendar.getInstance().getTimeInMillis(),
 				"Absolute today", 24, "五台山"));
-		resultList.add(new Group(2, "先锋书店图书节", Calendar.getInstance(), "神烦小清新",
+		resultList.add(new Group(2, "先锋书店图书节", Calendar.getInstance().getTimeInMillis(), "神烦小清新",
 				21, "五台山"));
-		resultList.add(new Group(3, "这边的高校真多= =", Calendar.getInstance(),
+		resultList.add(new Group(3, "这边的高校真多= =", Calendar.getInstance().getTimeInMillis(),
 				"S先生", 11, "五台山"));
-		resultList.add(new Group(4, "怎么去附近的景点", Calendar.getInstance(), "S先生",
+		resultList.add(new Group(4, "怎么去附近的景点", Calendar.getInstance().getTimeInMillis(), "S先生",
 				3, "五台山"));
 		return resultList;
 	}
@@ -38,7 +38,7 @@ public class FeedServiceSocketImpl implements FeedService {
 					result, "feeds");
 			for (String content : contents) {
 				resultList.add((Group) SocketMessageAnalyzer
-						.getBeanFromSocketMessage(content));
+						.getBeanFromSocketMessage(content, SocketMessageAnalyzer.BEAN_GROUP));
 			}
 		} else {
 			throw new UnknownErrorException();

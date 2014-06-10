@@ -11,15 +11,12 @@ import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
 
 import android.support.v7.app.ActionBarActivity;
-import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -28,26 +25,37 @@ import android.widget.AdapterView.OnItemClickListener;
 
 public class MygroupsActivity extends ActionBarActivity {
 	
-	private static final String UI_MYGROUP_ITEM_USRNAME = "usrname";
-	private static final String UI_MYGROUP_ITEM_LOCATION = "location";
-	private static final String UI_MYGROUP_ITEM_TITLE = "title";
+	private static final String UI_GROUP_ITEM_USRNAME = "usrname";
+	private static final String UI_GROUP_ITEM_LOCATION = "location";
+	private static final String UI_GROUP_ITEM_TITLE = "title";
 	
-	private static GetMygroupsTask getMygroupsTask;
-	
-	private static List<HashMap<String, Object>> mygroupList;
-	private static SimpleAdapter mygroupAdapter;
+	private List<HashMap<String, Object>> mygroupList;
+	private SimpleAdapter mygroupAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_mygroups);
 
-		if (savedInstanceState == null) {
-			getSupportFragmentManager().beginTransaction()
-					.add(R.id.container, new PlaceholderFragment()).commit();
-		}
+		ListView listView = (ListView) findViewById(R.id.mygroups_list_view);
+		mygroupList = new ArrayList<HashMap<String, Object>>();
+		mygroupAdapter = new SimpleAdapter(this, mygroupList,
+				R.layout.group_item_favorite_groups,
+				new String[] { UI_GROUP_ITEM_USRNAME, UI_GROUP_ITEM_LOCATION,
+						UI_GROUP_ITEM_TITLE }, new int[] {
+						R.id.mygroups_item_usrname, R.id.mygroups_item_location,
+						R.id.mygroups_item_title });
+		listView.setAdapter(mygroupAdapter);
 		
-		getMygroupsTask = new GetMygroupsTask();
+		listView.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				startDiscussActivity(((Group) parent.getItemAtPosition(position)).getId());
+			}
+		});
+
+		new GetMygroupsTask().execute();
 	}
 
 	@Override
@@ -69,45 +77,11 @@ public class MygroupsActivity extends ActionBarActivity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
-
-	/**
-	 * A placeholder fragment containing a simple view.
-	 */
-	public static class PlaceholderFragment extends Fragment {
-
-		public PlaceholderFragment() {
-		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.fragment_mygroups,
-					container, false);
-			
-			ListView listView = (ListView) rootView
-					.findViewById(R.id.mygroups_list_view);
-			mygroupList = new ArrayList<HashMap<String, Object>>();
-			mygroupAdapter = new SimpleAdapter(getActivity(), mygroupList,
-					R.layout.mygroups_item,
-					new String[] { UI_MYGROUP_ITEM_USRNAME, UI_MYGROUP_ITEM_LOCATION,
-							UI_MYGROUP_ITEM_TITLE }, new int[] {
-							R.id.mygroups_item_usrname, R.id.mygroups_item_location,
-							R.id.mygroups_item_title });
-			listView.setAdapter(mygroupAdapter);
-			
-			listView.setOnItemClickListener(new OnItemClickListener() {
-				@Override
-				public void onItemClick(AdapterView<?> parent, View view,
-						int position, long id) {
-					Intent toDiscussIntent = new Intent(getActivity(), DiscussActivity.class);
-					startActivity(toDiscussIntent);
-				}
-			});
-
-			getMygroupsTask.execute();
-			
-			return rootView;
-		}
+	
+	private void startDiscussActivity(int groupId) {
+		Intent toDiscussIntent = new Intent(this, DiscussActivity.class);
+		toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, groupId);
+		startActivity(toDiscussIntent);
 	}
 	
 	private class GetMygroupsTask extends AsyncTask<Void, Void, List<Group>> {
@@ -133,7 +107,7 @@ public class MygroupsActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof UnknownErrorException) {
-					Toast.makeText(getApplicationContext(), R.string.error_unknown, Toast.LENGTH_SHORT).show();
+					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				}
 			}
@@ -144,9 +118,9 @@ public class MygroupsActivity extends ActionBarActivity {
 			for (int i = 0; i < result.size(); i++) {
 				Group group = result.get(i);
 				HashMap<String, Object> map = new HashMap<String, Object>();
-				map.put(UI_MYGROUP_ITEM_USRNAME, group.getOwnerName()); // TODO Í¼Æ¬´æ·Å
-				map.put(UI_MYGROUP_ITEM_LOCATION, group.getLocation());
-				map.put(UI_MYGROUP_ITEM_TITLE, group.getTitle());
+				map.put(UI_GROUP_ITEM_USRNAME, group.getOwnerName()); // TODO Í¼Æ¬´æ·Å
+				map.put(UI_GROUP_ITEM_LOCATION, group.getLocation());
+				map.put(UI_GROUP_ITEM_TITLE, group.getTitle());
 				mygroupList.add(map);
 			}
 			mygroupAdapter.notifyDataSetChanged();

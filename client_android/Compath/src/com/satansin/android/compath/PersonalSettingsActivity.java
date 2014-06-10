@@ -52,6 +52,14 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 				startMygroupsActivity();
 			}
 		});
+		
+		RelativeLayout favoriteGroupsRelativeLayout = (RelativeLayout) findViewById(R.id.favorite_groups_relative_layout);
+		favoriteGroupsRelativeLayout.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				startFavoriteGroupsActivity();
+			}
+		});
 	}
 
 	@Override
@@ -77,14 +85,19 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 	private void startCitySelectionActivity() {
 		Intent toCitySelectionIntent = new Intent(this,
 				CitySelectionActivity.class);
+		toCitySelectionIntent.putExtra(
+				CitySelectionActivity.EXTRA_START_FROM_PERSONAL_SETTINGS, true);
 		startActivityForResult(toCitySelectionIntent, 0);
 	}
 
 	private void startMygroupsActivity() {
 		Intent toMygroupsIntent = new Intent(this, MygroupsActivity.class);
-		toMygroupsIntent.putExtra(
-				CitySelectionActivity.EXTRA_START_FROM_PERSONAL_SETTINGS, true);
 		startActivity(toMygroupsIntent);
+	}
+	
+	private void startFavoriteGroupsActivity() {
+		Intent toFavoriteGroupsIntent = new Intent(this, FavoriteGroupsActivity.class);
+		startActivity(toFavoriteGroupsIntent);
 	}
 
 	@Override

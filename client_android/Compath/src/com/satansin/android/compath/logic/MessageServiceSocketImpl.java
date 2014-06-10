@@ -56,7 +56,7 @@ public class MessageServiceSocketImpl implements MessageService {
 					result, "messages");
 			for (String content : contents) {
 				receivedMessages.add((Message) SocketMessageAnalyzer
-						.getBeanFromSocketMessage(content));
+						.getBeanFromSocketMessage(content, SocketMessageAnalyzer.BEAN_MESSAGE));
 			}
 		}
 		
