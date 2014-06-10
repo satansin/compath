@@ -28,13 +28,18 @@
     <string name="action_refresh">刷新</string>
     <string name="action_finish_creation">完成</string>
     
-    <string name="favor_success">收藏成功</string>
+    <string name="success_create">创建成功</string>
+    <string name="success_favor">收藏成功</string>
+    
+    <string name="error_create_fail">创建失败，请重试</string>
     <string name="error_favor_fail">收藏失败，请重试</string>
     <string name="error_set_fail">设置失败，请重试</string>
     <string name="error_unknown">出现未知错误，请重试</string>
     <string name="error_network_timeout">请检查网络连接</string>
     <string name="error_non_loc">无定位</string>
     <string name="error_locating_timeout">定位失败，请手动选择地点</string>
+    <string name="error_title_required">标题不能为空</string>
+    <string name="error_title_too_long">标题不能超过30个字符</string>
     
     <string name="alert_title">确认取消</string>
     <string name="alert_message">是否取消创建群组？</string>

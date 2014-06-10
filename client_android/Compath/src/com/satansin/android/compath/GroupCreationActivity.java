@@ -1,6 +1,12 @@
 package com.satansin.android.compath;
 
+import com.satansin.android.compath.logic.GroupCreationService;
+import com.satansin.android.compath.logic.NetworkTimeoutException;
+import com.satansin.android.compath.logic.ServiceFactory;
+import com.satansin.android.compath.logic.UnknownErrorException;
+
 import android.support.v7.app.ActionBarActivity;
+import android.text.TextUtils;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,6 +19,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class GroupCreationActivity extends ActionBarActivity {
 	
@@ -23,6 +30,8 @@ public class GroupCreationActivity extends ActionBarActivity {
 	
 	private EditText groupTitleEditText;
 	private TextView locationTextView;
+	
+	private String groupTitle = "";
 	
 	private CreateGroupTask createGroupTask;
 
@@ -84,6 +93,7 @@ public class GroupCreationActivity extends ActionBarActivity {
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		if (id == R.id.action_finish_creation) {
+			attemptCreate();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -107,21 +117,82 @@ public class GroupCreationActivity extends ActionBarActivity {
 			cancelAlertDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.alert_positive), cancelDialogListener);
 			cancelAlertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.alert_negative), cancelDialogListener);
 		}
-		return false;
+		return true;
 	}
 	
 	private void attemptCreate() {
+		if (createGroupTask != null) {
+			return;
+		}
 		
+		groupTitleEditText.setError(null);
+		groupTitle = groupTitleEditText.getText().toString();
+		
+		if (TextUtils.isEmpty(groupTitle)) {
+			groupTitleEditText.setError(getString(R.string.error_title_required));
+			groupTitleEditText.requestFocus();
+			return;
+		} else if (groupTitle.length() > 30) {
+			groupTitleEditText.setError(getString(R.string.error_invalid_password));
+			groupTitleEditText.requestFocus();
+			return;
+		}
+
+		createGroupTask = new CreateGroupTask();
+		createGroupTask.execute((Void) null);
 	}
 	
 	private class CreateGroupTask extends AsyncTask<Void, Void, Boolean> {
-
+		private Exception exception;
+		private GroupCreationService groupCreationService;
 		@Override
 		protected Boolean doInBackground(Void... params) {
-			// TODO Auto-generated method stub
-			return null;
+			groupCreationService = ServiceFactory.getGroupCreationService();
+			boolean created = false;
+			try {
+				created = groupCreationService.createGroup(groupTitle, locationId);
+			} catch (NetworkTimeoutException e) {
+				exception = (NetworkTimeoutException) e;
+			} catch (UnknownErrorException e) {
+				exception = (UnknownErrorException) e;
+			}
+			return created;
 		}
 		
+		@Override
+		protected void onPostExecute(final Boolean success) {
+			createGroupTask = null;
+			
+			if (exception != null) {
+				if (exception instanceof NetworkTimeoutException) {
+					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
+					return;
+				} else if (exception instanceof UnknownErrorException) {
+					Toast.makeText(getApplicationContext(), R.string.error_unknown, Toast.LENGTH_SHORT).show();
+					return;
+				}
+			}
+
+			if (success) {
+				Toast.makeText(getApplicationContext(), R.string.success_create, Toast.LENGTH_SHORT).show();
+				finishGroupCreation(groupCreationService.getNewCreatedGroupId());
+			} else {
+				Toast.makeText(getApplicationContext(), R.string.error_create_fail, Toast.LENGTH_SHORT).show();
+			}
+		}
+
+		@Override
+		protected void onCancelled() {
+			createGroupTask = null;
+		}
+		
+	}
+	
+	private void finishGroupCreation(int newCreatedGroupId) {
+		Intent intent = new Intent(this, FeedActivity.class);
+		intent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, newCreatedGroupId);
+		setResult(RESULT_OK, intent);
+		GroupCreationActivity.this.finish();
 	}
 
 }

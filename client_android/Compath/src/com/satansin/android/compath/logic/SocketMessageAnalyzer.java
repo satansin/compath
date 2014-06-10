@@ -33,8 +33,8 @@ public class SocketMessageAnalyzer {
 	 * {"opcode":"104",
 	 *  "message":
 	 *  	{"content":"hi",
-	 *  	"time":"6348264376285(in millisecond)",
-	 *  	"group_id":"36293"},
+	 *  	 "time":"6348264376285(in millisecond)",
+	 *  	 "group_id":"36293"},
 	 *  "session":"dfsfdif"(根据session读出发送者id作为消息的from值)}
 	 */
 	public static final int ASK_FOR_MESSAGE_SENDING = 104;
@@ -54,7 +54,7 @@ public class SocketMessageAnalyzer {
 	 * 	"group_id":"6352",
 	 * 	"session":"dfisojf88d"}
 	 */
-	public static final int ASK_FOR_ADDING_TO_MYGROUPS = 107;
+	public static final int ASK_FOR_GROUP_FAVORING = 107;
 	/**
 	 * {"opcode":"108",
 	 * 	"usrname":"doubi",
@@ -69,6 +69,13 @@ public class SocketMessageAnalyzer {
 	 * 	"session":"djisfs"}
 	 */
 	public static final int ASK_FOR_CITY_SETTING = 109;
+	/**
+	 * {"opcode":"110",
+	 * 	"title":"hey, look",
+	 * 	"location_id":"36273",
+	 * 	"session":"difhso"}
+	 */
+	public static final int ASK_FOR_GROUP_CREATING = 110;
 	
 	// return type codes
 	/**
@@ -121,14 +128,14 @@ public class SocketMessageAnalyzer {
 	 * 		 "owner_name":"MrJie",
 	 * 		 "number_of_members":"53",
 	 * 		 "location_name":"Street No 5"},
-	 * 		...(没有feed数组长度0)]}
+	 * 		...(没有的话数组长度0)]}
 	 */
 	public static final int MYGROUPS = 206;
 	/**
 	 * {"type":"207",
-	 * 	"added":"true/false"}
+	 * 	"favored":"true/false"}
 	 */
-	public static final int ADDED_TO_MYGROUPS = 207;
+	public static final int GROUP_FAVORED = 207;
 	/**
 	 * {"type":"208",
 	 * 	"registered":"true/false"}
@@ -139,6 +146,12 @@ public class SocketMessageAnalyzer {
 	 * 	"city_set":"true/false"}
 	 */
 	public static final int CITY_SET = 209;
+	/**
+	 * {"type":"210",
+	 * 	"created":"true/false"
+	 * 	"new_id":"36273"}
+	 */
+	public static final int GROUP_CREATED = 210;
 	
 	private static final String OPCODE_KEY = "opcode";
 	private static final String SESSION_KEY = "session";

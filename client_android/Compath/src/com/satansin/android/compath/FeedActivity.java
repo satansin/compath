@@ -210,7 +210,9 @@ public class FeedActivity extends ActionBarActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == REQUEST_CODE_GROUP_CREATION && resultCode == RESULT_OK) {
-			new GetFeedTask().execute();
+			Intent toDiscussIntent = new Intent(this, DiscussActivity.class);
+			toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, data.getIntExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, 0));
+			startActivity(toDiscussIntent);
 		} else if (requestCode == REQUEST_CODE_LOCATION_SELECTION && resultCode == RESULT_OK) {
 			String locationId = data.getStringExtra(EXTRA_LOCATION_ID);
 			String locationName = data.getStringExtra(EXTRA_LOCATION_NAME);
@@ -255,7 +257,13 @@ public class FeedActivity extends ActionBarActivity {
 				@Override
 				public void onItemClick(AdapterView<?> parent, View view,
 						int position, long id) {
+					Group selectedGroup = (Group) parent.getItemAtPosition(position);
+					if (selectedGroup == null) {
+						return;
+					}
+					
 					Intent toDiscussIntent = new Intent(getActivity(), DiscussActivity.class);
+					toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, selectedGroup.getId());
 					startActivity(toDiscussIntent);
 				}
 			});

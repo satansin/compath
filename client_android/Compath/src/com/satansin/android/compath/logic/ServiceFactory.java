@@ -34,4 +34,8 @@ public class ServiceFactory {
 		return new PersonalSettingsServiceSocketImpl();
 	}
 
+	public static GroupCreationService getGroupCreationService() {
+		return new GroupCreationServiceSocketImpl();
+	}
+
 }

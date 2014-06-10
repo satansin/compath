@@ -40,10 +40,10 @@ public class MygroupsServiceSocketImpl implements MygroupsService {
 	}
 
 	@Override
-	public boolean addToMygroups(int groupId) throws NetworkTimeoutException, UnknownErrorException {
+	public boolean favorGroup(int groupId) throws NetworkTimeoutException, UnknownErrorException {
 		boolean added = false;
 		String msg = SocketMessageAnalyzer.getSendingMsg(
-				SocketMessageAnalyzer.ASK_FOR_ADDING_TO_MYGROUPS,
+				SocketMessageAnalyzer.ASK_FOR_GROUP_FAVORING,
 				new String[] { "group_id" },
 				new String[] { String.valueOf(groupId) });
 		SocketConnector connector = new SocketConnector();
@@ -53,8 +53,8 @@ public class MygroupsServiceSocketImpl implements MygroupsService {
 			throw new NetworkTimeoutException();
 		}
 
-		if (SocketMessageAnalyzer.getMsgType(result) == SocketMessageAnalyzer.ADDED_TO_MYGROUPS) {
-			String content = SocketMessageAnalyzer.getMsgContent(result, "added");
+		if (SocketMessageAnalyzer.getMsgType(result) == SocketMessageAnalyzer.GROUP_FAVORED) {
+			String content = SocketMessageAnalyzer.getMsgContent(result, "favored");
 			if (content.equals("true")) {
 				added = true;
 			} // TODO error handling
@@ -63,6 +63,13 @@ public class MygroupsServiceSocketImpl implements MygroupsService {
 		}
 
 		return added;
+	}
+
+	@Override
+	public List<Group> getMyFavoriteList() throws NetworkTimeoutException,
+			UnknownErrorException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
