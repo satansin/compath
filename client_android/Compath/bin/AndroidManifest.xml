@@ -51,7 +51,13 @@
 
         <activity
             android:name="com.satansin.android.compath.MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:theme="@style/WelcomeTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
         <service
@@ -73,9 +79,6 @@
             android:name="com.satansin.android.compath.LocationSelectionActivity"
             android:label="@string/title_activity_location_selection"
             android:parentActivityName="com.satansin.android.compath.FeedActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.satansin.android.compath.FeedActivity" />
         </activity>
         <activity
             android:name="com.satansin.android.compath.PersonalSettingsActivity"
@@ -93,11 +96,6 @@
             android:name="com.satansin.android.compath.LoginActivity"
             android:label="@string/app_name"
             android:windowSoftInputMode="adjustResize|stateVisible" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name="com.satansin.android.compath.RegisterActivity"
@@ -123,6 +121,14 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.satansin.android.compath.PersonalSettingsActivity" />
+        </activity>
+        <activity
+            android:name="com.satansin.android.compath.LocationCreationActivity"
+            android:label="@string/title_activity_location_creation" >
+        </activity>
+        <activity
+            android:name="com.satansin.android.compath.MapSelectionActivity"
+            android:label="@string/title_activity_map_selection" >
         </activity>
     </application>
 

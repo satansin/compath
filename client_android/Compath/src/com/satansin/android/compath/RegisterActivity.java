@@ -50,6 +50,7 @@ public class RegisterActivity extends ActionBarActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		CompathApplication.getInstance().addActivity(this);
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_register);
@@ -120,6 +121,12 @@ public class RegisterActivity extends ActionBarActivity {
 		super.onCreateOptionsMenu(menu);
 		getMenuInflater().inflate(R.menu.register, menu);
 		return true;
+	}
+	
+	@Override
+	public void onDestroy() {
+		CompathApplication.getInstance().removeActivity(this);
+		super.onDestroy();
 	}
 
 	/**

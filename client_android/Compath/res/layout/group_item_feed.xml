@@ -16,7 +16,7 @@
     <RelativeLayout
         android:id="@+id/usrname_time_relative_layout"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="45dp"
         android:layout_alignBottom="@+id/feed_item_icon"
         android:layout_alignTop="@+id/feed_item_icon"
         android:layout_marginLeft="14dp"

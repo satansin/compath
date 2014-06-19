@@ -2,16 +2,16 @@ package com.satansin.android.compath.logic;
 
 public class Location {
 	
-	private String id;
+	private int id;
 	private String name;
 	private int latitude;
 	private int longitude;
 	
 	public Location() {
-		this("", "", 0, 0);
+		this(0, "", 0, 0);
 	}
 	
-	public Location(String id, String name, int latitude, int longitude) {
+	public Location(int id, String name, int latitude, int longitude) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -19,11 +19,11 @@ public class Location {
 		this.longitude = longitude;
 	}
 
-	public String getId() {
+	public int getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 

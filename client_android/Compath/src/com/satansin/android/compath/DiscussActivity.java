@@ -1,6 +1,7 @@
 package com.satansin.android.compath;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import com.satansin.android.compath.logic.GroupParticipationService;
@@ -9,15 +10,16 @@ import com.satansin.android.compath.logic.Message;
 import com.satansin.android.compath.logic.MessageService;
 import com.satansin.android.compath.logic.MygroupsService;
 import com.satansin.android.compath.logic.NetworkTimeoutException;
+import com.satansin.android.compath.logic.NotLoginException;
 import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
 import com.satansin.android.compath.util.UITimeGenerator;
 
 import android.support.v7.app.ActionBarActivity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.TimeUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,14 +48,20 @@ public class DiscussActivity extends ActionBarActivity {
 	private MessageAdapter messageAdapter;
 
 	private MessageService messageService = ServiceFactory.getMessageService();
-	private MemoryService memoryService = ServiceFactory.getMemoryService();
+	private MemoryService memoryService;
+	
+	private ReceivingThread receivingThread;
 	
 	private boolean hasFavored = false;
-
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		CompathApplication.getInstance().addActivity(this);
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_discuss);
+		
+		memoryService = ServiceFactory.getMemoryService(this);
 
 		if (!getIntent().hasExtra(EXTRA_DISCUSS_GROUP_ID)) {
 			Toast.makeText(getApplicationContext(), R.string.error_unknown_retry,
@@ -77,38 +85,13 @@ public class DiscussActivity extends ActionBarActivity {
 						attemptSending();
 					}
 				});
-
-		// thread to receive the messages
-		new Thread() {
-			@Override
-			public void run() {
-				while (true) {
-					final ArrayList<Message> newMessages = messageService
-							.receiveMessages(groupId);
-					listView.post(new Runnable() {
-						@Override
-						public void run() {
-							for (Message message : newMessages) {
-								message = memoryService.insertMessage(message, false);
-								appendMessage(message, listView
-										.getLastVisiblePosition() == listView
-										.getCount() - 1);
-							}
-						}
-					});
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		}.start();
 		
 		new EnterGroupTask().execute();
 		
 		new CheckGroupFavoredTask().execute();
 
+		receivingThread = new ReceivingThread();
+		receivingThread.start();
 	}
 
 	@Override
@@ -139,8 +122,54 @@ public class DiscussActivity extends ActionBarActivity {
 	@Override
 	public void finish() {
 		// TODO right to do like this?
+		receivingThread.stopReceiving();
 		new ExitGroupTask().execute();
 		super.finish();
+	}
+	
+	@Override
+	public void onDestroy() {
+		CompathApplication.getInstance().removeActivity(this);
+		super.onDestroy();
+	}
+	
+	private class ReceivingThread extends Thread {
+		private boolean isReceiving = true;
+		ArrayList<Message> newMessages = new ArrayList<Message>();
+		
+		public void run() {
+			while (true) {
+				if (!isReceiving) {
+					break;
+				}
+				try {
+					newMessages = messageService
+							.receiveMessages(groupId, memoryService.getMySession());
+				} catch (UnknownErrorException | NotLoginException e1) {
+				}
+				listView.post(new Runnable() {
+					@Override
+					public void run() {
+						for (Message message : newMessages) {
+//							message = memoryService.insertMessage(message, false); // TODO
+							message.setComingMsg(true);
+							appendMessage(message, listView
+									.getLastVisiblePosition() == listView
+									.getCount() - 1);
+						}
+					}
+				});
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		public void stopReceiving() {
+			isReceiving = false;
+		}
 	}
 	
 	private void attemptSending() {
@@ -149,7 +178,8 @@ public class DiscussActivity extends ActionBarActivity {
 			return;
 		}
 		inputEditText.setText("");
-		Message message = memoryService.insertMessage(text, false);
+//		Message message = memoryService.insertSendingMessage(text, groupId, false); // TODO
+		Message message = new Message(0, text, Calendar.getInstance().getTimeInMillis(), false, memoryService.getMyUsrname(), groupId);
 		appendMessage(message, true);
 
 		SendMessageTask sendMessageTask = new SendMessageTask();
@@ -203,7 +233,7 @@ public class DiscussActivity extends ActionBarActivity {
 			Message message = (Message) getItem(position);
 			boolean showTimeTag = true;
 			if (position > 0) {
-				Message previousMessage = (Message) getItem(position);
+				Message previousMessage = (Message) getItem(position - 1);
 				if (message.getTime() - previousMessage.getTime() < MINIMUM_SHOWING_TIMETAG_DIFF_IN_MILLIS) {
 					showTimeTag = false;
 				}
@@ -254,11 +284,13 @@ public class DiscussActivity extends ActionBarActivity {
 			GroupParticipationService groupParticipationService = ServiceFactory.getGroupParticipationService();
 			boolean entered = false;
 			try {
-				entered = groupParticipationService.enter(groupId);
+				entered = groupParticipationService.enter(groupId, memoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
 				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
 			}
 			return entered;
 		}
@@ -275,6 +307,11 @@ public class DiscussActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(),
 							R.string.error_unknown, Toast.LENGTH_SHORT).show();
 					return;
+				} else if (exception instanceof NotLoginException) {
+					memoryService.clearSession();
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
+					startActivity(intent);
 				}
 			}
 		}
@@ -287,8 +324,8 @@ public class DiscussActivity extends ActionBarActivity {
 		protected Void doInBackground(Void... params) {
 			GroupParticipationService groupParticipationService = ServiceFactory.getGroupParticipationService();
 			try {
-				groupParticipationService.exit(groupId);
-			} catch (NetworkTimeoutException | UnknownErrorException e) {
+				groupParticipationService.exit(groupId, memoryService.getMySession());
+			} catch (NetworkTimeoutException | UnknownErrorException | NotLoginException e) {
 			}
 			return ((Void) null);
 		}
@@ -302,11 +339,13 @@ public class DiscussActivity extends ActionBarActivity {
 		protected Boolean doInBackground(Message... params) {
 			boolean sent = false;
 			try {
-				sent = messageService.sendMessage(params[0]);
+				sent = messageService.sendMessage(params[0], memoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
 				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
 			}
 			return sent;
 		}
@@ -315,6 +354,12 @@ public class DiscussActivity extends ActionBarActivity {
 		protected void onPostExecute(final Boolean success) {
 			if (exception != null) {
 				// TODO: show that the message is not sent
+				if (exception instanceof NotLoginException) {
+					memoryService.clearSession();
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
+					startActivity(intent);
+				}
 			}
 			// TODO: stop the animation
 		}
@@ -329,11 +374,13 @@ public class DiscussActivity extends ActionBarActivity {
 					.getMygroupsService();
 			boolean added = false;
 			try {
-				added = mygroupsService.favorGroup(groupId);
+				added = mygroupsService.favorGroup(groupId, memoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
 				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
 			}
 			return added;
 		}
@@ -350,6 +397,11 @@ public class DiscussActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(),
 							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
+				} else if (exception instanceof NotLoginException) {
+					memoryService.clearSession();
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
+					startActivity(intent);
 				}
 			}
 
@@ -374,11 +426,13 @@ public class DiscussActivity extends ActionBarActivity {
 					.getMygroupsService();
 			boolean cancelled = false;
 			try {
-				cancelled = mygroupsService.removeFromFavor(groupId);
+				cancelled = mygroupsService.removeFromFavor(groupId, memoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
 				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
 			}
 			return cancelled;
 		}
@@ -395,6 +449,11 @@ public class DiscussActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(),
 							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
+				} else if (exception instanceof NotLoginException) {
+					memoryService.clearSession();
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
+					startActivity(intent);
 				}
 			}
 
@@ -416,8 +475,8 @@ public class DiscussActivity extends ActionBarActivity {
 			MygroupsService mygroupsService = ServiceFactory.getMygroupsService();
 			boolean hasFavored = false;
 			try {
-				hasFavored = mygroupsService.getGroupFavorStatus(groupId);
-			} catch (NetworkTimeoutException | UnknownErrorException e) {
+				hasFavored = mygroupsService.getGroupFavorStatus(groupId, memoryService.getMySession());
+			} catch (NetworkTimeoutException | UnknownErrorException | NotLoginException e) {
 			}
 			return hasFavored;
 		}

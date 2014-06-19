@@ -1,5 +1,18 @@
 package com.satansin.android.compath.logic;
 
+import android.content.Context;
+
+import com.satansin.android.compath.file.MemoryServiceSerialFileImpl;
+import com.satansin.android.compath.socket.FeedServiceSocketImpl;
+import com.satansin.android.compath.socket.GroupCreationServiceSocketImpl;
+import com.satansin.android.compath.socket.GroupParticipationServiceSocketImpl;
+import com.satansin.android.compath.socket.LocationServiceSocketImpl;
+import com.satansin.android.compath.socket.LoginServiceSocketImpl;
+import com.satansin.android.compath.socket.MessageServiceSocketImpl;
+import com.satansin.android.compath.socket.MygroupsServiceSocketImpl;
+import com.satansin.android.compath.socket.PersonalSettingsServiceSocketImpl;
+import com.satansin.android.compath.socket.RegisterServiceSocketImpl;
+
 public class ServiceFactory {
 
 	public static FeedService getFeedService() {
@@ -22,8 +35,8 @@ public class ServiceFactory {
 		return new RegisterServiceSocketImpl();
 	}
 
-	public static MemoryService getMemoryService() {
-		return new MemoryServiceSQLiteImpl();
+	public static MemoryService getMemoryService(Context context) {
+		return MemoryServiceSerialFileImpl.getInstance(context);
 	}
 
 	public static MessageService getMessageService() {

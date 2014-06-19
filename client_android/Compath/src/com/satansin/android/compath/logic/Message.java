@@ -7,18 +7,28 @@ public class Message {
 	private long time;
 	private boolean isComingMsg;
 	private String from;
+	private int groupId;
 	
 	public Message() {
-		this(0, "", 0, false, "");
+		this(0, "", 0, false, "", 0);
 	}
 	
-	public Message(int id, String content, long time, boolean isComingMsg, String from) {
+	public Message(int id, String content, long time, boolean isComingMsg, String from, int groupId) {
 		super();
 		this.id = id;
 		this.content = content;
 		this.time = time;
 		this.isComingMsg = isComingMsg;
 		this.from = from;
+		this.groupId = groupId;
+	}
+
+	public int getGroupId() {
+		return groupId;
+	}
+
+	public void setGroupId(int groupId) {
+		this.groupId = groupId;
 	}
 
 	public int getId() {
@@ -60,34 +70,5 @@ public class Message {
 	public void setFrom(String from) {
 		this.from = from;
 	}
-
-//	@Override
-//	public boolean equals(Object obj) {
-//		if (this == obj)
-//			return true;
-//		if (obj == null)
-//			return false;
-//		if (getClass() != obj.getClass())
-//			return false;
-//		Message other = (Message) obj;
-//		if (content == null) {
-//			if (other.content != null)
-//				return false;
-//		} else if (!content.equals(other.content))
-//			return false;
-//		if (from == null) {
-//			if (other.from != null)
-//				return false;
-//		} else if (!from.equals(other.from))
-//			return false;
-//		if (isComingMsg != other.isComingMsg)
-//			return false;
-//		if (time == null) {
-//			if (other.time != null)
-//				return false;
-//		} else if (!time.equals(other.time))
-//			return false;
-//		return true;
-//	}
 
 }

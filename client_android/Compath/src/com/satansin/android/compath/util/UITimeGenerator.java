@@ -2,6 +2,7 @@ package com.satansin.android.compath.util;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class UITimeGenerator {
@@ -19,15 +20,15 @@ public class UITimeGenerator {
 
 		Calendar current = Calendar.getInstance();
 		if (time.get(Calendar.YEAR) != current.get(Calendar.YEAR)) {
-			return (detail ? new SimpleDateFormat("yyyy-M-d h:m", Locale.getDefault()).format(time) :
-					new SimpleDateFormat("yyyy-M-d", Locale.getDefault()).format(time));
+			return (detail ? new SimpleDateFormat("yyyy-M-d h:m", Locale.getDefault()).format(new Date(timeInMillis)) :
+					new SimpleDateFormat("yyyy-M-d", Locale.getDefault()).format(new Date(timeInMillis)));
 		} else {
 			if (!(time.get(Calendar.MONTH) == current.get(Calendar.MONTH) && (time
 					.get(Calendar.DATE) == current.get(Calendar.DATE)))) {
-				return (detail ? new SimpleDateFormat("M-d h:m", Locale.getDefault()).format(time) :
-					new SimpleDateFormat("M-d", Locale.getDefault()).format(time));
+				return (detail ? new SimpleDateFormat("M-d h:m", Locale.getDefault()).format(new Date(timeInMillis)) :
+					new SimpleDateFormat("M-d", Locale.getDefault()).format(new Date(timeInMillis)));
 			} else {
-				return new SimpleDateFormat("h:m", Locale.getDefault()).format(time);
+				return new SimpleDateFormat("h:m", Locale.getDefault()).format(new Date(timeInMillis));
 			}
 		}
 	}

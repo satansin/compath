@@ -1,7 +1,11 @@
 package com.satansin.android.compath;
 
+import java.util.Comparator;
+
+import com.satansin.android.compath.logic.City;
 import com.satansin.android.compath.logic.MemoryService;
 import com.satansin.android.compath.logic.NetworkTimeoutException;
+import com.satansin.android.compath.logic.NotLoginException;
 import com.satansin.android.compath.logic.PersonalSettingsService;
 import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
@@ -10,6 +14,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,27 +29,43 @@ public class CitySelectionActivity extends ActionBarActivity {
 	
 	public static final String EXTRA_START_FROM_PERSONAL_SETTINGS = "com.satansin.android.compath.START_FROM_PERSONAL_SETTINGS";
 
+	public static final String EXTRA_CITY_ID = "com.satansin.android.compath.CITY_ID";
+	// TODO 如果有extra选择此城市
+
 	private MemoryService memoryService;
 	
 	private SetMyCityTask setMyCityTask = null;
 	
 	private Spinner provinceSpinner;
 	private Spinner citySpinner;
+	private ArrayAdapter<City> cityAdapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		CompathApplication.getInstance().addActivity(this);
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_city_selection);
 		
-		memoryService = ServiceFactory.getMemoryService();
+		memoryService = ServiceFactory.getMemoryService(getApplicationContext());
 		
 		provinceSpinner = (Spinner) findViewById(R.id.spinner_province);
 		String[] provinceNames = getResources().getStringArray(R.array.province_names);
+		ArrayAdapter<String> provinceAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, provinceNames);
+		provinceAdapter.sort(new Comparator<String>() {
+			@Override
+			public int compare(String lhs, String rhs) {
+				return lhs.compareTo(rhs);
+			}
+		});
 		provinceSpinner.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, provinceNames));
 		
 		citySpinner = (Spinner) findViewById(R.id.spinner_city);
-		String[] cityNamesOfFirstProvince = memoryService.getCityNamesByProvinceName(provinceNames[0]);
-		citySpinner.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, cityNamesOfFirstProvince));
+		City[] citiesOfFirstProvince = memoryService.getCitiesByProvinceName(provinceNames[0]);
+		
+		cityAdapter = new ArrayAdapter<City>(this, android.R.layout.simple_spinner_item, citiesOfFirstProvince);
+		cityAdapter.sort(City.getComparator());
+		citySpinner.setAdapter(cityAdapter);
 		
 		provinceSpinner.setOnItemSelectedListener(
 				new OnItemSelectedListener() {
@@ -52,9 +73,11 @@ public class CitySelectionActivity extends ActionBarActivity {
 					public void onItemSelected(AdapterView<?> parent,
 							View view, int position, long id) {
 						String selectedProvince = parent.getItemAtPosition(position).toString();
-						memoryService = ServiceFactory.getMemoryService();
-						String[] cityNames = memoryService.getCityNamesByProvinceName(selectedProvince);
-						citySpinner.setAdapter(new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, cityNames));
+						City[] cities = memoryService.getCitiesByProvinceName(selectedProvince);
+						Log.w("before refreshing adapter", String.valueOf(cities.length));
+						cityAdapter = new ArrayAdapter<City>(CitySelectionActivity.this, android.R.layout.simple_spinner_item, cities);
+						cityAdapter.sort(City.getComparator());
+						citySpinner.setAdapter(cityAdapter);
 					}
 					@Override
 					public void onNothingSelected(AdapterView<?> parent) {
@@ -69,11 +92,10 @@ public class CitySelectionActivity extends ActionBarActivity {
 							return;
 						}
 						
-						String selectedProv = provinceSpinner.getSelectedItem().toString();
-						String selectedCity = citySpinner.getSelectedItem().toString();
+						City selectedCity = (City) citySpinner.getSelectedItem();
 						
 						setMyCityTask = new SetMyCityTask();
-						setMyCityTask.execute(selectedProv, selectedCity);
+						setMyCityTask.execute(selectedCity);
 					}
 				});
 	}
@@ -98,18 +120,26 @@ public class CitySelectionActivity extends ActionBarActivity {
 		return super.onOptionsItemSelected(item);
 	}
 	
-	private class SetMyCityTask extends AsyncTask<String, Void, Boolean> {
+	@Override
+	public void onDestroy() {
+		CompathApplication.getInstance().removeActivity(this);
+		super.onDestroy();
+	}
+	
+	private class SetMyCityTask extends AsyncTask<City, Void, Boolean> {
 		private Exception exception;
 		@Override
-		protected Boolean doInBackground(String... params) {
+		protected Boolean doInBackground(City... params) {
 			PersonalSettingsService personalSettingsService = ServiceFactory.getPersonalSettingsService();
 			boolean citySet = false;
 			try {
-				citySet = personalSettingsService.setMyCity(params[0], params[1]);
+				citySet = personalSettingsService.setMyCity(params[0], memoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
 				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
 			}
 			return citySet;
 		}
@@ -125,6 +155,11 @@ public class CitySelectionActivity extends ActionBarActivity {
 				} else if (exception instanceof UnknownErrorException) {
 					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
+				} else if (exception instanceof NotLoginException) {
+					memoryService.clearSession();
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(CitySelectionActivity.this, LoginActivity.class);
+					startActivity(intent);
 				}
 			}
 			
@@ -145,7 +180,7 @@ public class CitySelectionActivity extends ActionBarActivity {
 		Intent intent;
 		if (getIntent().hasExtra(EXTRA_START_FROM_PERSONAL_SETTINGS)) {
 			intent = new Intent(this, PersonalSettingsActivity.class);
-			intent.putExtra(PersonalSettingsActivity.EXTRA_PERSONAL_SETTINGS_CITY, citySpinner.getSelectedItem().toString());
+			intent.putExtra(PersonalSettingsActivity.EXTRA_PERSONAL_SETTINGS_CITY_ID, ((City) citySpinner.getSelectedItem()).getId());
 		} else {
 			intent = new Intent(this, LoginActivity.class);
 		}

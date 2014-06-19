@@ -1,10 +1,16 @@
 package com.satansin.android.compath;
 
+import com.satansin.android.compath.logic.LoginService;
 import com.satansin.android.compath.logic.MemoryService;
+import com.satansin.android.compath.logic.NetworkTimeoutException;
+import com.satansin.android.compath.logic.NotLoginException;
+import com.satansin.android.compath.logic.PersonalSettingsService;
 import com.satansin.android.compath.logic.ServiceFactory;
+import com.satansin.android.compath.logic.UnknownErrorException;
 
 import android.support.v7.app.ActionBarActivity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,38 +18,38 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class PersonalSettingsActivity extends ActionBarActivity {
 
-	public static final String EXTRA_PERSONAL_SETTINGS_USRNAME = "com.satansin.android.compath.MSG_PERSONAL_SETTINGS_USRNAME";
-	public static final String EXTRA_PERSONAL_SETTINGS_CITY = "com.satansin.android.compath.MSG_PERSONAL_SETTINGS_CITY";
+	public static final String EXTRA_PERSONAL_SETTINGS_CITY_ID = "com.satansin.android.compath.MSG_PERSONAL_SETTINGS_CITY";
+	public static final String EXTRA_LOGOUT = "com.satansin.android.compath.MSG_LOGOUT";
+	
+	private int cityId = 0;
+	
+	private MemoryService memoryService;
+	
+	private TextView cityTextView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		CompathApplication.getInstance().addActivity(this);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_personal_settings);
 
-		Intent intent = getIntent();
-		if (intent.hasExtra(EXTRA_PERSONAL_SETTINGS_USRNAME)) {
-			((TextView) findViewById(R.id.personal_settings_usrname)).setText(intent.getStringExtra(EXTRA_PERSONAL_SETTINGS_USRNAME));
-		}
-		if (intent.hasExtra(EXTRA_PERSONAL_SETTINGS_CITY)) {
-			((TextView) findViewById(R.id.personal_settings_city)).setText(intent.getStringExtra(EXTRA_PERSONAL_SETTINGS_CITY));
-		}
-
-		// TODO get data from server
-		MemoryService memoryService = ServiceFactory.getMemoryService();
+		memoryService = ServiceFactory.getMemoryService(this);
 		TextView usrnameTextView = (TextView) findViewById(R.id.personal_settings_usrname);
 		usrnameTextView.setText(memoryService.getMyUsrname());
-		TextView cityTextView = (TextView) findViewById(R.id.personal_settings_city);
-		cityTextView.setText(memoryService.getMyCity());
-
+		
+		cityTextView = (TextView) findViewById(R.id.personal_settings_city);
 		cityTextView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				startCitySelectionActivity();
 			}
 		});
+		
+		new GetMycityTask().execute();
 
 		RelativeLayout mygroupsRelativeLayout = (RelativeLayout) findViewById(R.id.mygroups_relative_layout);
 		mygroupsRelativeLayout.setOnClickListener(new OnClickListener() {
@@ -76,10 +82,22 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		// automatically handle clicks on the Home/Up button, so long
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
-		if (id == R.id.action_settings) {
+		if (id == R.id.action_logout) {
+			new LogoutTask().execute();
+			
+			Intent toFeedIntent = new Intent(PersonalSettingsActivity.this, FeedActivity.class);
+			toFeedIntent.putExtra(EXTRA_LOGOUT, true);
+			setResult(RESULT_OK, toFeedIntent);
+			PersonalSettingsActivity.this.finish();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+	
+	@Override
+	public void onDestroy() {
+		CompathApplication.getInstance().removeActivity(this);
+		super.onDestroy();
 	}
 
 	private void startCitySelectionActivity() {
@@ -87,6 +105,8 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 				CitySelectionActivity.class);
 		toCitySelectionIntent.putExtra(
 				CitySelectionActivity.EXTRA_START_FROM_PERSONAL_SETTINGS, true);
+		toCitySelectionIntent.putExtra(
+				CitySelectionActivity.EXTRA_CITY_ID, cityId);
 		startActivityForResult(toCitySelectionIntent, 0);
 	}
 
@@ -103,9 +123,63 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == 0 && resultCode == RESULT_OK) {
-			if (data.hasExtra(EXTRA_PERSONAL_SETTINGS_CITY)) {
-				((TextView) findViewById(R.id.personal_settings_city)).setText(data.getStringExtra(EXTRA_PERSONAL_SETTINGS_CITY));
+			if (data.hasExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID)) {
+				cityId = data.getIntExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID, 0);
+				((TextView) findViewById(R.id.personal_settings_city)).setText(memoryService.getCityName(cityId));
 			}
+		}
+	}
+	
+	private class GetMycityTask extends AsyncTask<Void, Void, Integer> {
+		private Exception exception;
+		@Override
+		protected Integer doInBackground(Void... params) {
+			PersonalSettingsService personalSettingsService = ServiceFactory.getPersonalSettingsService();
+			int cityId = 0;
+			try {
+				cityId = personalSettingsService.getMyCityId(memoryService.getMySession());
+			} catch (NetworkTimeoutException e) {
+				exception = (NetworkTimeoutException) e;
+			} catch (UnknownErrorException e) {
+				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
+			}
+			return cityId;
+		}
+		
+		@Override
+		protected void onPostExecute(Integer result) {
+			if (exception != null) {
+				if (exception instanceof NetworkTimeoutException) {
+					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
+					return;
+				} else if (exception instanceof UnknownErrorException) {
+					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
+					return;
+				} else if (exception instanceof NotLoginException) {
+					ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(PersonalSettingsActivity.this, LoginActivity.class);
+					startActivity(intent);
+				}
+			}
+
+			PersonalSettingsActivity.this.cityId = result;
+			cityTextView.setText(memoryService.getCityName(result));
+		}
+	}
+	
+	private class LogoutTask extends AsyncTask<Void, Void, Void> {
+		@Override
+		protected Void doInBackground(Void... params) {
+			try {
+				LoginService loginService = ServiceFactory.getLoginService();
+				loginService.logout(memoryService.getMySession());
+				memoryService.clearSession();
+			} catch (Exception e) {
+			}
+			return (Void) null;
 		}
 	}
 

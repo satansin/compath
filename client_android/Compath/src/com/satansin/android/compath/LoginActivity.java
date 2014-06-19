@@ -15,7 +15,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -54,6 +53,7 @@ public class LoginActivity extends ActionBarActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		CompathApplication.getInstance().addActivity(this);
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_login);
@@ -119,6 +119,12 @@ public class LoginActivity extends ActionBarActivity {
 		// return true;
 		// }
 		return super.onOptionsItemSelected(item);
+	}
+	
+	@Override
+	public void onDestroy() {
+		CompathApplication.getInstance().removeActivity(this);
+		super.onDestroy();
 	}
 
 	public void attemptLogin() {
@@ -232,7 +238,6 @@ public class LoginActivity extends ActionBarActivity {
 			showProgress(false);
 
 			if (exception != null) {
-				Log.w("exception", exception);
 				if (exception instanceof NetworkTimeoutException) {
 					Toast.makeText(getApplicationContext(),
 							R.string.error_network_timeout, Toast.LENGTH_SHORT)
@@ -246,7 +251,8 @@ public class LoginActivity extends ActionBarActivity {
 			}
 
 			if (!TextUtils.isEmpty(session)) {
-				MemoryService memoryService = ServiceFactory.getMemoryService();
+				MemoryService memoryService = ServiceFactory.getMemoryService(getApplicationContext());
+				memoryService.clearSession();
 				boolean sessionWritten = memoryService.writeSession(mUsrname,
 						session);
 				if (!sessionWritten) {
@@ -305,9 +311,10 @@ public class LoginActivity extends ActionBarActivity {
 		if (requestCode == REQUEST_CODE_REGISTER && resultCode == RESULT_OK) {
 			if (data.hasExtra(EXTRA_LOGIN_USRNAME)) {
 				mUsrnameView.setText(data.getStringExtra(EXTRA_LOGIN_USRNAME));
+				mPasswordView.requestFocus();
 			}
 		} else if (requestCode == REQUEST_CODE_CITY_SELECTION && resultCode == RESULT_OK) {
-			
+			startFeedActivity();
 		}
 	}
 	

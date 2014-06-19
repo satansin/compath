@@ -5,8 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.satansin.android.compath.logic.Group;
+import com.satansin.android.compath.logic.MemoryService;
 import com.satansin.android.compath.logic.MygroupsService;
 import com.satansin.android.compath.logic.NetworkTimeoutException;
+import com.satansin.android.compath.logic.NotLoginException;
 import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
 
@@ -35,6 +37,8 @@ public class FavoriteGroupsActivity extends ActionBarActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		CompathApplication.getInstance().addActivity(this);
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_favorite_groups);
 
@@ -88,6 +92,12 @@ public class FavoriteGroupsActivity extends ActionBarActivity {
 		return super.onOptionsItemSelected(item);
 	}
 	
+	@Override
+	public void onDestroy() {
+		CompathApplication.getInstance().removeActivity(this);
+		super.onDestroy();
+	}
+	
 	private void startDiscussActivity(int groupId) {
 		Intent toDiscussIntent = new Intent(this, DiscussActivity.class);
 		toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, groupId);
@@ -101,11 +111,14 @@ public class FavoriteGroupsActivity extends ActionBarActivity {
 			MygroupsService mygroupsService = ServiceFactory.getMygroupsService();
 			ArrayList<Group> groups = new ArrayList<Group>();
 			try {
-				groups = (ArrayList<Group>) mygroupsService.getMyFavoriteList();
+				MemoryService memoryService = ServiceFactory.getMemoryService(getApplicationContext());
+				groups = (ArrayList<Group>) mygroupsService.getMyFavoriteList(memoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
 				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
 			}
 			return groups;
 		}
@@ -119,6 +132,11 @@ public class FavoriteGroupsActivity extends ActionBarActivity {
 				} else if (exception instanceof UnknownErrorException) {
 					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
+				} else if (exception instanceof NotLoginException) {
+					ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(FavoriteGroupsActivity.this, LoginActivity.class);
+					startActivity(intent);
 				}
 			}
 			if (result.size() == 0) {

@@ -2,15 +2,15 @@
 <resources>
 
     <string name="app_name">Compath</string>
-    
+    <string name="welcome_text">Compath</string>
     <string name="discuss_input_hint"></string>
     <string name="image_content_description"></string>
     <string name="discuss_sending_text">发送</string>
     <string name="hint_group_title">输入群组标题，最多30个字</string>
+    <string name="hint_location_name">输入地点名称，最多15个字</string>
     <string name="mygroups_personal_settings">我的群组</string>
     <string name="favorite_groups_personal_settings">收藏的群组</string>
     <string name="finish_selection">完成</string>
-    
     <string name="title_activity_feed">Compath</string>
     <string name="title_board_fragment">公告墙</string>
     <string name="title_consult_fragment">问答室</string>
@@ -22,7 +22,8 @@
     <string name="title_activity_group_creation">创建群组</string>
     <string name="title_activity_city_selection">选择城市</string>
     <string name="title_activity_favorite_groups">收藏的群组</string>
-    
+    <string name="title_activity_location_creation">创建地点</string>
+    <string name="title_activity_map_selection">点击选择位置</string>
     <string name="action_location_selection">选择地点</string>
     <string name="action_favor">收藏</string>
     <string name="action_cancel_favor">取消收藏</string>
@@ -31,11 +32,12 @@
     <string name="action_create_group">创建群组</string>
     <string name="action_refresh">刷新</string>
     <string name="action_finish_creation">完成</string>
-    
+    <string name="action_exit">退出</string>
+    <string name="action_logout">注销当前账号</string>
+    <string name="action_create_location">创建地点</string>
     <string name="success_create">创建成功</string>
     <string name="success_favor">收藏成功</string>
     <string name="success_cancel">取消成功</string>
-    
     <string name="error_create_fail_retry">创建失败，请重试</string>
     <string name="error_favor_fail_retry">收藏失败，请重试</string>
     <string name="error_set_fail_retry">设置失败，请重试</string>
@@ -47,12 +49,21 @@
     <string name="error_locating_timeout">定位失败，请手动选择地点</string>
     <string name="error_title_required">标题不能为空</string>
     <string name="error_title_too_long">标题不能超过30个字符</string>
-    
-    <string name="alert_title">确认取消</string>
-    <string name="alert_message">是否取消创建群组？</string>
+    <string name="error_name_required">名称不能为空</string>
+    <string name="error_name_too_long">名称不能超过30个字符</string>
+    <string name="error_invalid_location">创建群组时必须选择一个具体的地点</string>
+    <string name="alert_cancel_title">确认取消</string>
+    <string name="alert_cancel_message_create">是否取消创建？</string>
+    <string name="alert_exit_title">确认退出</string>
+    <string name="alert_exit_message">是否退出Compath？</string>
     <string name="alert_positive">是</string>
     <string name="alert_negative">否</string>
+    <string name="alert_create_loc_title">创建地点</string>
 
+    <string-array name="alert_create_loc_list">
+        <item>当前位置</item>
+        <item>自己选择</item>
+    </string-array>
     <string-array name="province_names">
         <item>北京</item>
         <item>天津</item>
@@ -80,7 +91,6 @@
         <item>陕西</item>
         <item>甘肃</item>
         <item>青海</item>
-        <item>台湾</item>
         <item>内蒙古</item>
         <item>广西</item>
         <item>西藏</item>
@@ -88,6 +98,7 @@
         <item>新疆</item>
         <item>香港</item>
         <item>澳门</item>
+        <!-- 台湾 -->
     </string-array>
 
 </resources>

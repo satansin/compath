@@ -4,14 +4,14 @@ import java.util.List;
 
 public interface MygroupsService {
 
-	public List<Group> getMygroupsList() throws NetworkTimeoutException, UnknownErrorException;
+	public List<Group> getMygroupsList(String session) throws NetworkTimeoutException, UnknownErrorException, NotLoginException;
 	
-	public List<Group> getMyFavoriteList() throws NetworkTimeoutException, UnknownErrorException;
+	public List<Group> getMyFavoriteList(String session) throws NetworkTimeoutException, UnknownErrorException, NotLoginException;
 
-	public boolean favorGroup(int groupId) throws NetworkTimeoutException, UnknownErrorException;
+	public boolean favorGroup(int groupId, String session) throws NetworkTimeoutException, UnknownErrorException, NotLoginException;
 	
-	public boolean removeFromFavor(int groupId) throws NetworkTimeoutException, UnknownErrorException;
+	public boolean removeFromFavor(int groupId, String session) throws NetworkTimeoutException, UnknownErrorException, NotLoginException;
 
-	public boolean getGroupFavorStatus(int groupId) throws NetworkTimeoutException, UnknownErrorException;
+	public boolean getGroupFavorStatus(int groupId, String session) throws NetworkTimeoutException, UnknownErrorException, NotLoginException;
 
 }
