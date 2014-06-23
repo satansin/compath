@@ -56,7 +56,11 @@ public class SocketConnector {
 		int t = 0;
 		while (t < timeout) {
 			try {
-				messageReceived = new SocketMsg(reader.readLine());
+				String line = reader.readLine();
+				if (line == null) {
+					continue;
+				}
+				messageReceived = new SocketMsg(line);
 				Log.w("socket_receive", messageReceived.toString());
 			} catch (IOException e) {
 				e.printStackTrace();

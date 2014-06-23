@@ -1,7 +1,6 @@
 package com.satansin.android.compath;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import com.baidu.location.BDLocation;
@@ -349,9 +348,8 @@ public class FeedActivity extends ActionBarActivity {
 				@Override
 				public void onItemClick(AdapterView<?> parent, View view,
 						int position, long id) {
-					@SuppressWarnings("unchecked")
-					HashMap<String, Object> selectedMap = (HashMap<String, Object>) parent.getItemAtPosition(position);
-					int selectedGroupId = (Integer) selectedMap.get("group_id"); // TODO 直接从feedList获取
+					Group selectedGroup = (Group) parent.getItemAtPosition(position);
+					int selectedGroupId = selectedGroup.getId();
 					
 					Intent toDiscussIntent = new Intent(getActivity(), DiscussActivity.class);
 					toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, selectedGroupId);
@@ -499,7 +497,7 @@ public class FeedActivity extends ActionBarActivity {
 			viewHolder.timeTextView.setText(new UITimeGenerator().getFormattedFeedTime(group.getLastActiveTime()));
 			viewHolder.usrnameTextView.setText(group.getOwnerName());
 			viewHolder.titleTextView.setText(group.getTitle());
-			viewHolder.numberTextView.setText(group.getNumberOfMembers());
+			viewHolder.numberTextView.setText(String.valueOf(group.getNumberOfMembers()));
 			
 			new GetUsrIconTask(group.getIconUrl()).execute();
 			return convertView;

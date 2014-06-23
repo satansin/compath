@@ -21,7 +21,9 @@ import com.satansin.android.compath.logic.ImageService;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BitmapFactory.Options;
 import android.os.Environment;
+import android.util.Log;
 
 public class FileHelper {
 	
@@ -288,6 +290,8 @@ public class FileHelper {
 	}
     
     private String getImageFilePath(String url, int quality) {
+    	String[] split = url.split("/");
+    	String fileName = split[split.length - 1];
     	String parent = "";
     	switch (quality) {
 		case ImageService.ORIGIN:
@@ -299,13 +303,18 @@ public class FileHelper {
 		default:
 			break;
 		}
-    	return (SDPATH + "/" + DIRNAME_IMAGE + "/" + parent + "/" + url);
+    	Log.w("image_path", (SDPATH + "/" + DIRNAME_IMAGE + "/" + parent + "/" + fileName));
+    	return (SDPATH + "/" + DIRNAME_IMAGE + "/" + parent + "/" + fileName);
     }
 
 	public Bitmap getLocalImage(String url, int quality) {
 		try {
 			FileInputStream stream = new FileInputStream(getImageFilePath(url, quality));
-			return BitmapFactory.decodeStream(stream);
+			Options options = new Options();
+			options.inSampleSize = 1;
+			Bitmap bitmap = BitmapFactory.decodeStream(stream, null, options);
+			stream.close();
+			return bitmap;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
