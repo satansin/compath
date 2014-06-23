@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Compath</string>
-    <string name="welcome_text">Compath</string>
+    <string name="app_name">LocChat</string>
+    <string name="welcome_text">点聊</string>
     <string name="discuss_input_hint"></string>
     <string name="image_content_description"></string>
     <string name="discuss_sending_text">发送</string>
@@ -24,6 +24,7 @@
     <string name="title_activity_favorite_groups">收藏的群组</string>
     <string name="title_activity_location_creation">创建地点</string>
     <string name="title_activity_map_selection">点击选择位置</string>
+    <string name="title_activity_image_view">查看图片</string>
     <string name="action_location_selection">选择地点</string>
     <string name="action_favor">收藏</string>
     <string name="action_cancel_favor">取消收藏</string>
@@ -35,6 +36,7 @@
     <string name="action_exit">退出</string>
     <string name="action_logout">注销当前账号</string>
     <string name="action_create_location">创建地点</string>
+    <string name="action_upload_icon">修改头像</string>
     <string name="success_create">创建成功</string>
     <string name="success_favor">收藏成功</string>
     <string name="success_cancel">取消成功</string>
@@ -55,7 +57,7 @@
     <string name="alert_cancel_title">确认取消</string>
     <string name="alert_cancel_message_create">是否取消创建？</string>
     <string name="alert_exit_title">确认退出</string>
-    <string name="alert_exit_message">是否退出Compath？</string>
+    <string name="alert_exit_message">是否退出点聊？</string>
     <string name="alert_positive">是</string>
     <string name="alert_negative">否</string>
     <string name="alert_create_loc_title">创建地点</string>

@@ -106,6 +106,8 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			setResult(RESULT_OK, toFeedIntent);
 			PersonalSettingsActivity.this.finish();
 			return true;
+		} else if (id == R.id.action_upload_icon) {
+			
 		}
 		return super.onOptionsItemSelected(item);
 	}

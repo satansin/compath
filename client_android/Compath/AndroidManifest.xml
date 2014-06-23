@@ -130,6 +130,11 @@
             android:name="com.satansin.android.compath.MapSelectionActivity"
             android:label="@string/title_activity_map_selection" >
         </activity>
+        <activity
+            android:name="com.satansin.android.compath.ImageViewActivity"
+            android:label="@string/title_activity_image_view"
+            android:theme="@style/ImageViewTheme" >
+        </activity>
     </application>
 
 </manifest>
