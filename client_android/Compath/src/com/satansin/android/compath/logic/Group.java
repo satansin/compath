@@ -8,13 +8,17 @@ public class Group {
 	private String ownerName;
 	private int numberOfMembers;
 	private String location;
+	/**
+	 * ÓÃ»§Í·ÏñURL
+	 */
+	private String iconUrl;
 
 	public Group() {
-		this(0, "", 0, "", 0, "");
+		this(0, "", 0, "", 0, "", "");
 	}
 	
 	public Group(int id, String title, long lastActiveTime,
-			String ownerName, int numberOfMembers, String location) {
+			String ownerName, int numberOfMembers, String location, String iconUrl) {
 		super();
 		this.id = id;
 		this.title = title;
@@ -22,6 +26,7 @@ public class Group {
 		this.ownerName = ownerName;
 		this.numberOfMembers = numberOfMembers;
 		this.location = location;
+		this.setIconUrl(iconUrl);
 	}
 	
 	public int getId() {
@@ -70,6 +75,14 @@ public class Group {
 	
 	public void setLocation(String location) {
 		this.location = location;
+	}
+
+	public String getIconUrl() {
+		return iconUrl;
+	}
+
+	public void setIconUrl(String iconUrl) {
+		this.iconUrl = iconUrl;
 	}
 
 }

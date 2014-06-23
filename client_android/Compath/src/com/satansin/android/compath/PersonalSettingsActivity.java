@@ -1,5 +1,6 @@
 package com.satansin.android.compath;
 
+import com.satansin.android.compath.logic.ImageService;
 import com.satansin.android.compath.logic.LoginService;
 import com.satansin.android.compath.logic.MemoryService;
 import com.satansin.android.compath.logic.NetworkTimeoutException;
@@ -10,12 +11,14 @@ import com.satansin.android.compath.logic.UnknownErrorException;
 
 import android.support.v7.app.ActionBarActivity;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,10 +29,12 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 	public static final String EXTRA_LOGOUT = "com.satansin.android.compath.MSG_LOGOUT";
 	
 	private int cityId = 0;
+	private String iconUrl = "";
 	
 	private MemoryService memoryService;
 	
 	private TextView cityTextView;
+	private ImageView iconImageView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +55,17 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		});
 		
 		new GetMycityTask().execute();
+		
+		iconImageView = (ImageView) findViewById(R.id.personal_settings_icon);
+		iconImageView.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// TODO 跳转到大图查看页面
+				
+			}
+		});
+		
+		new GetMyIconUrlTask().execute();
 
 		RelativeLayout mygroupsRelativeLayout = (RelativeLayout) findViewById(R.id.mygroups_relative_layout);
 		mygroupsRelativeLayout.setOnClickListener(new OnClickListener() {
@@ -130,6 +146,35 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		}
 	}
 	
+	private class GetMyIconUrlTask extends AsyncTask<Void, Void, Void> {
+		@Override
+		protected Void doInBackground(Void... params) {
+			PersonalSettingsService personalSettingsService = ServiceFactory.getPersonalSettingsService();
+			try {
+				iconUrl = personalSettingsService.getMyIconUrl(memoryService.getMySession());
+			} catch (NetworkTimeoutException | UnknownErrorException | NotLoginException e) {
+				e.printStackTrace();
+			}
+			return (Void)null;
+		}
+		@Override
+		protected void onPostExecute(Void result) {
+			new GetMyIconThumbTask().execute();
+		}
+	}
+	
+	private class GetMyIconThumbTask extends AsyncTask<Void, Void, Bitmap> {
+		@Override
+		protected Bitmap doInBackground(Void... params) {
+			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
+			return imageService.getBitmap(iconUrl, ImageService.THUMB_ICON);
+		}
+		@Override
+		protected void onPostExecute(Bitmap result) {
+			iconImageView.setImageBitmap(result);
+		}
+	}
+	
 	private class GetMycityTask extends AsyncTask<Void, Void, Integer> {
 		private Exception exception;
 		@Override
@@ -147,7 +192,6 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			}
 			return cityId;
 		}
-		
 		@Override
 		protected void onPostExecute(Integer result) {
 			if (exception != null) {

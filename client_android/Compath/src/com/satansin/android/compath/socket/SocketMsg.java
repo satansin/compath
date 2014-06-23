@@ -129,6 +129,23 @@ public class SocketMsg {
 	 * 	"session":"fdhsufds"}
 	 */
 	public static final int ASK_FOR_LOCATION_CREATION = 119;
+	/**
+	 * {"opcode":"120",
+	 * 	"session":"4"}
+	 */
+	public static final int ASK_FOR_UPLOAD_TOKEN = 120;
+	/**
+	 * {"opcode":"121",
+	 * 	"action":"2",
+	 * 	"session":"4",
+	 * 	(optional)"location_id":"3623"}
+	 */
+	public static final int ASK_FOR_IMAGE_UPDATE = 121;
+	/**
+	 * {"opcode":"121",
+	 * 	"session":"4"}
+	 */
+	public static final int ASK_FOR_MYICON_URL = 122;
 	
 	// return type codes
 	/**
@@ -283,12 +300,30 @@ public class SocketMsg {
 	 */
 	public static final int RE_LOGGED_OUT = 218;
 	/**
-	 * {"type":"210",
+	 * {"type":"219",
 	 * 	"created":"true/false"
 	 * 	"new_id":"36273",
 	 * 	"error":"300/303"}
 	 */
 	public static final int RE_LOCATION_CREATED = 219;
+	/**
+	 * {"type":"220",
+	 * 	"token":"difjsdhfis",
+	 * 	"error":"300/303"}
+	 */
+	public static final int RE_UPLOAD_TOKEN = 220;
+	/**
+	 * {"type":"221",
+	 * 	"updated":"true/false",
+	 * 	"error":"300/303"}
+	 */
+	public static final int RE_IMAGE_UPDATED = 221;
+	/**
+	 * {"type":"222",
+	 * 	"url":"http...",
+	 * 	"error":"300/303"}
+	 */
+	public static final int RE_MYICON_URL = 222;
 	
 	public static final int ERROR_UNKNOWN = 300;
 	public static final int ERROR_USRNAME_PASSWD_NOT_MATCHED = 301;
@@ -303,6 +338,9 @@ public class SocketMsg {
 	public static final String PARAM_LOCATION = "l";
 	public static final String PARAM_CITY = "c";
 	public static final String PARAM_MESSAGES = "m";
+	public static final String PARAM_TOKEN = "tk";
+	public static final String PARAM_ACTION = "a";
+	public static final String PARAM_URL = "ur";
 	
 	public static final String PARAM_SENT = "sn";
 	public static final String PARAM_FAVORED = "f";
@@ -315,6 +353,7 @@ public class SocketMsg {
 	public static final String PARAM_FIRST_LOGIN = "fl";
 	public static final String PARAM_HAS_FAVORED = "h";
 	public static final String PARAM_LOGGED_OUT = "lg";
+	public static final String PARAM_IMAGE_UPDATED = "iu";
 	
 	public static final String PARAM_LOCATION_ID = "li";
 	public static final String PARAM_LATITUDE = "la";
@@ -333,6 +372,10 @@ public class SocketMsg {
 	public static final String PARAM_GROUP_LAST_ACTIVE_TIME = "gl";
 	public static final String PARAM_GROUP_OWNER_NAME = "go";
 	public static final String PARAM_GROUP_NUMBER_MEMBERS = "gn";
+	
+	public static final int ACTION_ICON = 1;
+	public static final int ACTION_MSG = 2;
+	public static final int ACTION_PHOTO = 3;
 	
 	private static final String OPCODE_KEY = "o";
 	private static final String RETURN_TYPE = "t";
@@ -518,6 +561,7 @@ public class SocketMsg {
 			group.setNumberOfMembers(getIntMsgContent(PARAM_GROUP_NUMBER_MEMBERS));
 			group.setOwnerName(getStringMsgContent(PARAM_GROUP_OWNER_NAME));
 			group.setTitle(getStringMsgContent(PARAM_GROUP_TITLE));
+			group.setIconUrl(getStringMsgContent(PARAM_URL));
 			return group;
 		case BEAN_LOCATION:
 			Location location = new Location();

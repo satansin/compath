@@ -78,4 +78,38 @@ public class PersonalSettingsServiceSocketImpl implements
 		return myCityId;
 	}
 
+	@Override
+	public String getMyIconUrl(String session)
+			throws NetworkTimeoutException, UnknownErrorException,
+			NotLoginException {
+		String url = "";
+		SocketMsg msg = new SocketMsg(SocketMsg.ASK_FOR_MYICON_URL);
+		msg.putString(SocketMsg.PARAM_SESSION, session);
+		
+		SocketConnector connector = new SocketConnector();
+		SocketMsg result = connector.send(msg, 8000);
+
+		if (result == null) {
+			throw new NetworkTimeoutException();
+		}
+
+		if (result.getMsgType() == SocketMsg.RE_MYICON_URL) {
+			int error = result.getMsgError();
+			switch (error) {
+			case SocketMsg.ERROR_NOT_LOGIN:
+				throw new NotLoginException();
+			case SocketMsg.ERROR_UNKNOWN:
+				throw new UnknownErrorException();
+			default:
+				break;
+			}
+			
+			url = result.getStringMsgContent(SocketMsg.PARAM_URL);
+		} else {
+			throw new UnknownErrorException();
+		}
+		
+		return url;
+	}
+
 }

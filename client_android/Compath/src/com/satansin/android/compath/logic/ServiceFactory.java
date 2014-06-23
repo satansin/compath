@@ -3,6 +3,7 @@ package com.satansin.android.compath.logic;
 import android.content.Context;
 
 import com.satansin.android.compath.file.MemoryServiceSerialFileImpl;
+import com.satansin.android.compath.qiniu.ImageServiceQiniuImpl;
 import com.satansin.android.compath.socket.FeedServiceSocketImpl;
 import com.satansin.android.compath.socket.GroupCreationServiceSocketImpl;
 import com.satansin.android.compath.socket.GroupParticipationServiceSocketImpl;
@@ -53,6 +54,10 @@ public class ServiceFactory {
 
 	public static GroupParticipationService getGroupParticipationService() {
 		return new GroupParticipationServiceSocketImpl();
+	}
+
+	public static ImageService getImageService(Context context) {
+		return new ImageServiceQiniuImpl(context);
 	}
 
 }

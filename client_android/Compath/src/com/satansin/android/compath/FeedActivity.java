@@ -12,6 +12,7 @@ import com.baidu.mapapi.BMapManager;
 import com.baidu.mapapi.map.LocationData;
 import com.satansin.android.compath.logic.FeedService;
 import com.satansin.android.compath.logic.Group;
+import com.satansin.android.compath.logic.ImageService;
 import com.satansin.android.compath.logic.Location;
 import com.satansin.android.compath.logic.LocationService;
 import com.satansin.android.compath.logic.MemoryService;
@@ -26,8 +27,10 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -38,8 +41,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class FeedActivity extends ActionBarActivity {
@@ -49,11 +54,12 @@ public class FeedActivity extends ActionBarActivity {
 	public static final String EXTRA_LOCATION_LAT = "com.satansin.android.compath.EXTRA_FEED_LOCATION_LAT";
 	public static final String EXTRA_LOCATION_LON = "com.satansin.android.compath.EXTRA_FEED_LOCATION_LON";
 	
-	private static final String UI_FEED_ITEM_ICON = "icon";
-	private static final String UI_FEED_ITEM_USRNAME = "usrname";
-	private static final String UI_FEED_ITEM_TIME = "time";
-	private static final String UI_FEED_ITEM_TITLE = "title";
-	private static final String UI_FEED_ITEM_NUMBER_OF_MEMBERS = "numberOfMembers";
+	// TODO delete
+//	private static final String UI_FEED_ITEM_ICON = "icon";
+//	private static final String UI_FEED_ITEM_USRNAME = "usrname";
+//	private static final String UI_FEED_ITEM_TIME = "time";
+//	private static final String UI_FEED_ITEM_TITLE = "title";
+//	private static final String UI_FEED_ITEM_NUMBER_OF_MEMBERS = "numberOfMembers";
 	
 	private static final int REQUEST_CODE_GROUP_CREATION = 0;
 	private static final int REQUEST_CODE_LOCATION_SELECTION = 1;
@@ -62,8 +68,12 @@ public class FeedActivity extends ActionBarActivity {
 
 	private static Location location = new Location();
 
-	private static List<HashMap<String, Object>> feedList;
-	private static SimpleAdapter feedAdapter;
+	// TODO delete
+//	private static List<HashMap<String, Object>> feedList;
+//	private static SimpleAdapter feedAdapter;
+	
+	private static List<Group> feedList;
+	private static FeedItemAdapter feedAdapter;
 	
 	// 定位相关
 	private LocationClient mLocClient;
@@ -127,6 +137,9 @@ public class FeedActivity extends ActionBarActivity {
 		CompathApplication.getInstance().addActivity(this);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_feed);
+
+		feedList = new ArrayList<Group>();
+		feedAdapter = new FeedItemAdapter(this);
 
 		if (savedInstanceState == null) {
 			getSupportFragmentManager().beginTransaction()
@@ -320,15 +333,16 @@ public class FeedActivity extends ActionBarActivity {
 
 			ListView listView = (ListView) rootView
 					.findViewById(R.id.feed_list_view);
-			feedList = new ArrayList<HashMap<String, Object>>();
-			feedAdapter = new SimpleAdapter(getActivity(), feedList,
-					R.layout.group_item_feed,
-					new String[] { UI_FEED_ITEM_ICON, UI_FEED_ITEM_USRNAME,
-							UI_FEED_ITEM_TIME, UI_FEED_ITEM_TITLE,
-							UI_FEED_ITEM_NUMBER_OF_MEMBERS }, new int[] {
-							R.id.feed_item_icon, R.id.feed_item_usrname,
-							R.id.feed_item_time, R.id.feed_item_title,
-							R.id.feed_item_number_of_members });
+			// TODO delete
+//			feedList = new ArrayList<HashMap<String, Object>>();
+//			feedAdapter = new SimpleAdapter(getActivity(), feedList,
+//					R.layout.group_item_feed,
+//					new String[] { UI_FEED_ITEM_ICON, UI_FEED_ITEM_USRNAME,
+//							UI_FEED_ITEM_TIME, UI_FEED_ITEM_TITLE,
+//							UI_FEED_ITEM_NUMBER_OF_MEMBERS }, new int[] {
+//							R.id.feed_item_icon, R.id.feed_item_usrname,
+//							R.id.feed_item_time, R.id.feed_item_title,
+//							R.id.feed_item_number_of_members });
 			listView.setAdapter(feedAdapter);
 			
 			listView.setOnItemClickListener(new OnItemClickListener() {
@@ -337,7 +351,7 @@ public class FeedActivity extends ActionBarActivity {
 						int position, long id) {
 					@SuppressWarnings("unchecked")
 					HashMap<String, Object> selectedMap = (HashMap<String, Object>) parent.getItemAtPosition(position);
-					int selectedGroupId = (Integer) selectedMap.get("group_id");
+					int selectedGroupId = (Integer) selectedMap.get("group_id"); // TODO 直接从feedList获取
 					
 					Intent toDiscussIntent = new Intent(getActivity(), DiscussActivity.class);
 					toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, selectedGroupId);
@@ -419,18 +433,93 @@ public class FeedActivity extends ActionBarActivity {
 			feedList.clear();
 			for (int i = 0; i < result.size(); i++) {
 				Group group = result.get(i);
-				HashMap<String, Object> map = new HashMap<String, Object>();
-				map.put("group_id", group.getId());
-				map.put(UI_FEED_ITEM_ICON, R.drawable.test_icon); // TODO 图片存放
-				map.put(UI_FEED_ITEM_USRNAME, group.getOwnerName());
-				map.put(UI_FEED_ITEM_TIME, new UITimeGenerator().getFormattedFeedTime(group.getLastActiveTime()));
-				map.put(UI_FEED_ITEM_TITLE, group.getTitle());
-				map.put(UI_FEED_ITEM_NUMBER_OF_MEMBERS, group.getNumberOfMembers());
-				feedList.add(map);
+				// TODO delete
+//				HashMap<String, Object> map = new HashMap<String, Object>();
+//				map.put("group_id", group.getId());
+//				map.put(UI_FEED_ITEM_ICON, ImageFactory.getBitmap(group.getOwnerIconUrl(), getApplicationContext())); // TODO 图片存放
+//				map.put(UI_FEED_ITEM_USRNAME, group.getOwnerName());
+//				map.put(UI_FEED_ITEM_TIME, new UITimeGenerator().getFormattedFeedTime(group.getLastActiveTime()));
+//				map.put(UI_FEED_ITEM_TITLE, group.getTitle());
+//				map.put(UI_FEED_ITEM_NUMBER_OF_MEMBERS, group.getNumberOfMembers());
+				feedList.add(group);
 			}
 			feedAdapter.notifyDataSetChanged();
 		}
 		
+	}
+	
+	private class FeedItemAdapter extends BaseAdapter {
+		private Context context;
+		private ViewHolder viewHolder = new ViewHolder();
+		
+		class ViewHolder {
+			public ImageView iconImageView;
+			public TextView timeTextView;
+			public TextView usrnameTextView;
+			public TextView titleTextView;
+			public TextView numberTextView;
+		}
+
+		public FeedItemAdapter(Context context) {
+			this.context = context;
+		}
+
+		@Override
+		public int getCount() {
+			return feedList.size();
+		}
+
+		@Override
+		public Object getItem(int position) {
+			return feedList.get(position);
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return position;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			Group group = (Group) getItem(position);
+			convertView = LayoutInflater.from(context).inflate(R.layout.group_item_feed, null);
+			viewHolder.timeTextView = (TextView) convertView
+					.findViewById(R.id.feed_item_time);
+			viewHolder.iconImageView = (ImageView) convertView
+					.findViewById(R.id.feed_item_icon);
+			viewHolder.usrnameTextView = (TextView) convertView
+					.findViewById(R.id.feed_item_usrname);
+			viewHolder.titleTextView = (TextView) convertView
+					.findViewById(R.id.feed_item_title);
+			viewHolder.numberTextView = (TextView) convertView
+					.findViewById(R.id.feed_item_number_of_members);
+			convertView.setTag(viewHolder);
+
+			// TODO 点击头像发消息或者查看大图
+			viewHolder.timeTextView.setText(new UITimeGenerator().getFormattedFeedTime(group.getLastActiveTime()));
+			viewHolder.usrnameTextView.setText(group.getOwnerName());
+			viewHolder.titleTextView.setText(group.getTitle());
+			viewHolder.numberTextView.setText(group.getNumberOfMembers());
+			
+			new GetUsrIconTask(group.getIconUrl()).execute();
+			return convertView;
+		}
+		
+		private class GetUsrIconTask extends AsyncTask<Void, Void, Bitmap> {
+			private String url;
+			public GetUsrIconTask(String url) {
+				this.url = url;
+			}
+			@Override
+			protected Bitmap doInBackground(Void... params) {
+				ImageService imageService = ServiceFactory.getImageService(context);
+				return imageService.getBitmap(url, ImageService.THUMB_ICON);
+			}
+			@Override
+			protected void onPostExecute(Bitmap result) {
+				viewHolder.iconImageView.setImageBitmap(result);
+			}
+		}
 	}
 
 }

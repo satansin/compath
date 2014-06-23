@@ -1,5 +1,6 @@
 package com.satansin.android.compath.file;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,8 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.satansin.android.compath.logic.City;
+import com.satansin.android.compath.logic.ImageService;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
 
 public class FileHelper {
@@ -34,6 +38,9 @@ public class FileHelper {
     
     private static final String FILENAME_SESSION = "ssn";
     private static final String FILENAME_CITIES = "cty";
+    private static final String DIRNAME_IMAGE = "img";
+    private static final String DIRNAME_IMAGE_ORIGIN = "ori";
+    private static final String DIRNAME_IMAGE_THUMB_ICON = "tmi";
     
     static final int OBJECT_SESSION = 1;
 
@@ -48,6 +55,21 @@ public class FileHelper {
         File sdDir = new File(SDPATH);
         if (!sdDir.exists()) {
 			sdDir.mkdir();
+		}
+        
+        File imageDir = new File(SDPATH + "/" + DIRNAME_IMAGE);
+        if (!imageDir.exists()) {
+			imageDir.mkdir();
+		}
+        
+        File imageOriginDir = new File(SDPATH + "/" + DIRNAME_IMAGE + "/" + DIRNAME_IMAGE_ORIGIN);
+        if (!imageOriginDir.exists()) {
+        	imageOriginDir.mkdir();
+		}
+        
+        File imageThumbIconDir = new File(SDPATH + "/" + DIRNAME_IMAGE + "/" + DIRNAME_IMAGE_THUMB_ICON);
+        if (!imageThumbIconDir.exists()) {
+        	imageThumbIconDir.mkdir();
 		}
     }
     
@@ -263,6 +285,44 @@ public class FileHelper {
 			this.usrname = usrname;
 			this.session = session;
 		}
+	}
+    
+    private String getImageFilePath(String url, int quality) {
+    	String parent = "";
+    	switch (quality) {
+		case ImageService.ORIGIN:
+			parent = DIRNAME_IMAGE_ORIGIN;
+			break;
+		case ImageService.THUMB_ICON:
+			parent = DIRNAME_IMAGE_THUMB_ICON;
+			break;
+		default:
+			break;
+		}
+    	return (SDPATH + "/" + DIRNAME_IMAGE + "/" + parent + "/" + url);
+    }
+
+	public Bitmap getLocalImage(String url, int quality) {
+		try {
+			FileInputStream stream = new FileInputStream(getImageFilePath(url, quality));
+			return BitmapFactory.decodeStream(stream);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public boolean putLocalImage(String url, Bitmap bitmap, int quality) {
+		try {
+			File file = new File(getImageFilePath(url, quality));
+			BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
+			bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream); // TODO format and quality selection
+			stream.flush();
+			stream.close();
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
 	}
     
 }
