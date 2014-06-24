@@ -1,0 +1,8 @@
+#Android bin, gen and config#
+/client_android/Compath/bin/*
+/client_android/Compath/.settings/*
+/client_android/Compath/gen/*
+/client_android/Compath/.classpath
+/client_android/Compath/.project
+/client_android/Compath/proguard-project.txt
+/client_android/Compath/project.properties
