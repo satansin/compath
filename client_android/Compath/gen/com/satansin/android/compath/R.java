@@ -1292,19 +1292,18 @@ containing a value of this type.
         public static final int activity_personal_settings=0x7f030024;
         public static final int activity_register=0x7f030025;
         public static final int feed_item=0x7f030026;
-        public static final int fragment_discuss=0x7f030027;
-        public static final int fragment_feed=0x7f030028;
-        public static final int fragment_location_selection=0x7f030029;
-        public static final int fragment_main=0x7f03002a;
-        public static final int fragment_mygroups=0x7f03002b;
-        public static final int group_item_favorite_groups=0x7f03002c;
-        public static final int group_item_feed=0x7f03002d;
-        public static final int message_item_left_with_timetag=0x7f03002e;
-        public static final int message_item_left_without_timetag=0x7f03002f;
-        public static final int message_item_right_with_timetag=0x7f030030;
-        public static final int message_item_right_without_timetag=0x7f030031;
-        public static final int mygroups_item=0x7f030032;
-        public static final int support_simple_spinner_dropdown_item=0x7f030033;
+        public static final int fragment_feed=0x7f030027;
+        public static final int fragment_location_selection=0x7f030028;
+        public static final int fragment_main=0x7f030029;
+        public static final int fragment_mygroups=0x7f03002a;
+        public static final int group_item_favorite_groups=0x7f03002b;
+        public static final int group_item_feed=0x7f03002c;
+        public static final int message_item_left_with_timetag=0x7f03002d;
+        public static final int message_item_left_without_timetag=0x7f03002e;
+        public static final int message_item_right_with_timetag=0x7f03002f;
+        public static final int message_item_right_without_timetag=0x7f030030;
+        public static final int mygroups_item=0x7f030031;
+        public static final int support_simple_spinner_dropdown_item=0x7f030032;
     }
     public static final class menu {
         public static final int city_selection=0x7f0d0000;
