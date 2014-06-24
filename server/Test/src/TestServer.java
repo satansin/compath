@@ -596,7 +596,7 @@ public class TestServer {
 						 "from `user`, `user_detail`, `location`, `group` left join `participation` on `participation`.`group_id` = `group`.`id` " +
 						 "where `location`.`city_id` = ? and " +
 						 	   "`location`.`id` = `group`.`location_id` and " +
-						 	   "`group`.`owner_id` = `user`.`id` " +
+						 	   "`group`.`owner_id` = `user`.`id` and " +
 						 	   "`user`.`id` = `user_detail`.`user_id` " +
 						 "group by `group`.`id` " +
 						 "order by `number_of_members` desc;";
