@@ -145,7 +145,7 @@ public class DiscussActivity extends ActionBarActivity {
 				try {
 					newMessages = messageService
 							.receiveMessages(groupId, memoryService.getMySession());
-				} catch (UnknownErrorException | NotLoginException e1) {
+				} catch (Exception e1) {
 				}
 				listView.post(new Runnable() {
 					@Override
@@ -325,7 +325,7 @@ public class DiscussActivity extends ActionBarActivity {
 			GroupParticipationService groupParticipationService = ServiceFactory.getGroupParticipationService();
 			try {
 				groupParticipationService.exit(groupId, memoryService.getMySession());
-			} catch (NetworkTimeoutException | UnknownErrorException | NotLoginException e) {
+			} catch (Exception e) {
 			}
 			return ((Void) null);
 		}
@@ -476,7 +476,7 @@ public class DiscussActivity extends ActionBarActivity {
 			boolean hasFavored = false;
 			try {
 				hasFavored = mygroupsService.getGroupFavorStatus(groupId, memoryService.getMySession());
-			} catch (NetworkTimeoutException | UnknownErrorException | NotLoginException e) {
+			} catch (Exception e) {
 			}
 			return hasFavored;
 		}

@@ -154,7 +154,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			PersonalSettingsService personalSettingsService = ServiceFactory.getPersonalSettingsService();
 			try {
 				iconUrl = personalSettingsService.getMyIconUrl(memoryService.getMySession());
-			} catch (NetworkTimeoutException | UnknownErrorException | NotLoginException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			return (Void)null;
