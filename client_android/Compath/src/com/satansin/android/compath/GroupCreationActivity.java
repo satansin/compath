@@ -188,7 +188,10 @@ public class GroupCreationActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NotLoginException) {
-					ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					try {
+						ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(GroupCreationActivity.this, LoginActivity.class);
 					startActivity(intent);

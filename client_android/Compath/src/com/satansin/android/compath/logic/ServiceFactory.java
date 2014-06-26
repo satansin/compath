@@ -2,7 +2,7 @@ package com.satansin.android.compath.logic;
 
 import android.content.Context;
 
-import com.satansin.android.compath.file.MemoryServiceSerialFileImpl;
+import com.satansin.android.compath.file.MemoryServiceFileImpl;
 import com.satansin.android.compath.qiniu.ImageServiceQiniuImpl;
 import com.satansin.android.compath.socket.FeedServiceSocketImpl;
 import com.satansin.android.compath.socket.GroupCreationServiceSocketImpl;
@@ -13,6 +13,7 @@ import com.satansin.android.compath.socket.MessageServiceSocketImpl;
 import com.satansin.android.compath.socket.MygroupsServiceSocketImpl;
 import com.satansin.android.compath.socket.PersonalSettingsServiceSocketImpl;
 import com.satansin.android.compath.socket.RegisterServiceSocketImpl;
+import com.satansin.android.compath.socket.UploadServiceSocketImpl;
 
 public class ServiceFactory {
 
@@ -37,7 +38,7 @@ public class ServiceFactory {
 	}
 
 	public static MemoryService getMemoryService(Context context) {
-		return MemoryServiceSerialFileImpl.getInstance(context);
+		return MemoryServiceFileImpl.getInstance(context);
 	}
 
 	public static MessageService getMessageService() {
@@ -58,6 +59,10 @@ public class ServiceFactory {
 
 	public static ImageService getImageService(Context context) {
 		return new ImageServiceQiniuImpl(context);
+	}
+
+	public static UploadService getUploadService() {
+		return new UploadServiceSocketImpl();
 	}
 
 }

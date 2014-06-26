@@ -8,12 +8,13 @@ public class Message {
 	private boolean isComingMsg;
 	private String from;
 	private int groupId;
+	private String iconUrl;
 	
 	public Message() {
-		this(0, "", 0, false, "", 0);
+		this(0, "", 0, false, "", 0, "");
 	}
 	
-	public Message(int id, String content, long time, boolean isComingMsg, String from, int groupId) {
+	public Message(int id, String content, long time, boolean isComingMsg, String from, int groupId, String iconUrl) {
 		super();
 		this.id = id;
 		this.content = content;
@@ -21,6 +22,7 @@ public class Message {
 		this.isComingMsg = isComingMsg;
 		this.from = from;
 		this.groupId = groupId;
+		this.setIconUrl(iconUrl);
 	}
 
 	public int getGroupId() {
@@ -69,6 +71,14 @@ public class Message {
 
 	public void setFrom(String from) {
 		this.from = from;
+	}
+
+	public String getIconUrl() {
+		return iconUrl;
+	}
+
+	public void setIconUrl(String iconUrl) {
+		this.iconUrl = iconUrl;
 	}
 
 }

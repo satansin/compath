@@ -61,11 +61,15 @@ public class CitySelectionActivity extends ActionBarActivity {
 		provinceSpinner.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, provinceNames));
 		
 		citySpinner = (Spinner) findViewById(R.id.spinner_city);
-		City[] citiesOfFirstProvince = memoryService.getCitiesByProvinceName(provinceNames[0]);
-		
-		cityAdapter = new ArrayAdapter<City>(this, android.R.layout.simple_spinner_item, citiesOfFirstProvince);
-		cityAdapter.sort(City.getComparator());
-		citySpinner.setAdapter(cityAdapter);
+		try {
+
+			City[] citiesOfFirstProvince = memoryService.getCitiesByProvinceName(provinceNames[0]);
+			
+			cityAdapter = new ArrayAdapter<City>(this, android.R.layout.simple_spinner_item, citiesOfFirstProvince);
+			cityAdapter.sort(City.getComparator());
+			citySpinner.setAdapter(cityAdapter);
+		} catch (UnknownErrorException e) {
+		}
 		
 		provinceSpinner.setOnItemSelectedListener(
 				new OnItemSelectedListener() {
@@ -73,11 +77,14 @@ public class CitySelectionActivity extends ActionBarActivity {
 					public void onItemSelected(AdapterView<?> parent,
 							View view, int position, long id) {
 						String selectedProvince = parent.getItemAtPosition(position).toString();
-						City[] cities = memoryService.getCitiesByProvinceName(selectedProvince);
-						Log.w("before refreshing adapter", String.valueOf(cities.length));
-						cityAdapter = new ArrayAdapter<City>(CitySelectionActivity.this, android.R.layout.simple_spinner_item, cities);
-						cityAdapter.sort(City.getComparator());
-						citySpinner.setAdapter(cityAdapter);
+						try {
+							City[] cities = memoryService.getCitiesByProvinceName(selectedProvince);
+							Log.w("before refreshing adapter", String.valueOf(cities.length));
+							cityAdapter = new ArrayAdapter<City>(CitySelectionActivity.this, android.R.layout.simple_spinner_item, cities);
+							cityAdapter.sort(City.getComparator());
+							citySpinner.setAdapter(cityAdapter);
+						} catch (Exception e) {
+						}
 					}
 					@Override
 					public void onNothingSelected(AdapterView<?> parent) {
@@ -156,7 +163,10 @@ public class CitySelectionActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NotLoginException) {
-					memoryService.clearSession();
+					try {
+						memoryService.clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(CitySelectionActivity.this, LoginActivity.class);
 					startActivity(intent);

@@ -1247,10 +1247,11 @@ public class TestServer {
 		}
 		
 		try {
-			String sql = "select `message`.`content`, `message`.`time`, `user`.`username`, `user`.`id` " +
-						 "from `message`, `user` " +
+			String sql = "select `message`.`content`, `message`.`time`, `user`.`username`, `user`.`id`, `user_detail`.`icon_url` " +
+						 "from `message`, `user`, `user_detail` " +
 						 "where `message`.`group_id` = ? and " +
 						  	   "`message`.`sender_id` = `user`.`id` and " +
+						  	   "`user`.`id` = `user_detail`.`user_id` and " +
 						  	   "`message`.`time` > " +
 						  	   		"(select `last_received_time` from `participation` where `group_id` = ? and `user_id` = ?);";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -1267,6 +1268,7 @@ public class TestServer {
 				message.put(PARAM_MSG_CONTENT, resultSet.getString("content"));
 				message.put(PARAM_MSG_TIME, resultSet.getLong("time"));
 				message.put(PARAM_MSG_FROM, resultSet.getString("username"));
+				message.put(PARAM_URL, resultSet.getString("icon_url"));
 				messageArray.add(message);
 			}
 			

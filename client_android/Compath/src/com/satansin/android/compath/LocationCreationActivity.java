@@ -111,7 +111,10 @@ public class LocationCreationActivity extends ActionBarActivity {
 				if (res.type == MKAddrInfo.MK_REVERSEGEOCODE){
 					String city = res.addressComponents.city;
 					Log.w("city_get", city);
-					cityId = ServiceFactory.getMemoryService(getApplicationContext()).getCityIdByName(city);
+					try {
+						cityId = ServiceFactory.getMemoryService(getApplicationContext()).getCityIdByName(city);
+					} catch (UnknownErrorException e) {
+					}
 				}
 			}
 			public void onGetBusDetailResult(MKBusLineResult arg0, int arg1) {
@@ -263,7 +266,10 @@ public class LocationCreationActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NotLoginException) {
-					ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					try {
+						ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(LocationCreationActivity.this, LoginActivity.class);
 					startActivity(intent);

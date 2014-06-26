@@ -251,14 +251,17 @@ public class LoginActivity extends ActionBarActivity {
 			}
 
 			if (!TextUtils.isEmpty(session)) {
-				MemoryService memoryService = ServiceFactory.getMemoryService(getApplicationContext());
-				memoryService.clearSession();
-				boolean sessionWritten = memoryService.writeSession(mUsrname,
-						session);
-				if (!sessionWritten) {
-					Toast.makeText(getApplicationContext(),
-							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
-					return;
+				try {
+					MemoryService memoryService = ServiceFactory.getMemoryService(getApplicationContext());
+					memoryService.clearSession();
+					boolean sessionWritten = memoryService.writeSession(mUsrname,
+							session);
+					if (!sessionWritten) {
+						Toast.makeText(getApplicationContext(),
+								R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
+						return;
+					}
+				} catch (UnknownErrorException e) {
 				}
 				if (loginService.isFirstLogin()) {
 					startCitySelectionActivity();
