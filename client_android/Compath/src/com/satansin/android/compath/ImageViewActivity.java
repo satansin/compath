@@ -2,6 +2,7 @@ package com.satansin.android.compath;
 
 import com.satansin.android.compath.logic.ImageService;
 import com.satansin.android.compath.logic.ServiceFactory;
+import com.satansin.android.compath.logic.UnknownErrorException;
 
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
@@ -54,12 +55,18 @@ public class ImageViewActivity extends ActionBarActivity {
 		@Override
 		protected Bitmap doInBackground(Void... params) {
 			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-			return imageService.getBitmap(url, ImageService.ORIGIN);
+			try {
+				return imageService.getBitmap(url, ImageService.ORIGIN);
+			} catch (UnknownErrorException e) {
+				return null;
+			}
 		}
 		@Override
 		protected void onPostExecute(Bitmap result) {
 			getOriginImageTask = null;
-			imageContainer.setImageBitmap(result);
+			if (result != null) {
+				imageContainer.setImageBitmap(result);
+			}
 		}
 	}
 

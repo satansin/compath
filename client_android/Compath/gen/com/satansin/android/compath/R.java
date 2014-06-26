@@ -1141,12 +1141,12 @@ containing a value of this type.
         public static final int favorite_groups_list_view=0x7f050043;
         public static final int favorite_groups_relative_layout=0x7f05005c;
         public static final int favorite_groups_title=0x7f05005d;
-        public static final int feed_item_icon=0x7f050068;
-        public static final int feed_item_number_of_members=0x7f05006d;
-        public static final int feed_item_time=0x7f05006b;
-        public static final int feed_item_title=0x7f05006c;
-        public static final int feed_item_usrname=0x7f05006a;
-        public static final int feed_list_view=0x7f05006e;
+        public static final int feed_item_icon=0x7f05006c;
+        public static final int feed_item_number_of_members=0x7f050071;
+        public static final int feed_item_time=0x7f05006f;
+        public static final int feed_item_title=0x7f050070;
+        public static final int feed_item_usrname=0x7f05006e;
+        public static final int feed_list_view=0x7f050068;
         public static final int finish_city_selection_button=0x7f05003f;
         public static final int group_creation_location_reminder=0x7f050046;
         public static final int group_creation_location_text=0x7f050047;
@@ -1165,15 +1165,15 @@ containing a value of this type.
         public static final int login_form=0x7f050050;
         public static final int login_status=0x7f05004e;
         public static final int login_status_message=0x7f05004f;
-        public static final int message_item_content=0x7f050075;
+        public static final int message_item_content=0x7f050074;
         public static final int message_item_icon=0x7f050073;
         public static final int message_item_time=0x7f050072;
-        public static final int message_item_usrname=0x7f050074;
+        public static final int message_item_usrname=0x7f050075;
         public static final int middle=0x7f050012;
         public static final int mygroups_arrow=0x7f05005b;
-        public static final int mygroups_item_location=0x7f050071;
-        public static final int mygroups_item_title=0x7f050070;
-        public static final int mygroups_item_usrname=0x7f05006f;
+        public static final int mygroups_item_location=0x7f05006b;
+        public static final int mygroups_item_title=0x7f05006a;
+        public static final int mygroups_item_usrname=0x7f050069;
         public static final int mygroups_list_view=0x7f050057;
         public static final int mygroups_relative_layout=0x7f050058;
         public static final int mygroups_title=0x7f05005a;
@@ -1220,7 +1220,7 @@ containing a value of this type.
         public static final int useLogo=0x7f050003;
         public static final int usrname=0x7f050051;
         public static final int usrname_reminder=0x7f050064;
-        public static final int usrname_time_relative_layout=0x7f050069;
+        public static final int usrname_time_relative_layout=0x7f05006d;
         public static final int welcome_text_view=0x7f050056;
         public static final int withText=0x7f05000c;
     }
@@ -1288,16 +1288,18 @@ containing a value of this type.
         public static final int activity_mygroups=0x7f030023;
         public static final int activity_personal_settings=0x7f030024;
         public static final int activity_register=0x7f030025;
-        public static final int feed_item=0x7f030026;
-        public static final int fragment_feed=0x7f030027;
-        public static final int group_item_favorite_groups=0x7f030028;
-        public static final int group_item_feed=0x7f030029;
-        public static final int message_item_left_with_timetag=0x7f03002a;
+        public static final int fragment_feed=0x7f030026;
+        public static final int group_item_favorite_groups=0x7f030027;
+        public static final int group_item_feed=0x7f030028;
+        public static final int message_item_left_with_timetag=0x7f030029;
+        public static final int message_item_left_with_timetag1=0x7f03002a;
         public static final int message_item_left_without_timetag=0x7f03002b;
-        public static final int message_item_right_with_timetag=0x7f03002c;
-        public static final int message_item_right_without_timetag=0x7f03002d;
-        public static final int mygroups_item=0x7f03002e;
-        public static final int support_simple_spinner_dropdown_item=0x7f03002f;
+        public static final int message_item_left_without_timetag1=0x7f03002c;
+        public static final int message_item_right_with_timetag=0x7f03002d;
+        public static final int message_item_right_with_timetag1=0x7f03002e;
+        public static final int message_item_right_without_timetag=0x7f03002f;
+        public static final int message_item_right_without_timetag1=0x7f030030;
+        public static final int support_simple_spinner_dropdown_item=0x7f030031;
     }
     public static final class menu {
         public static final int city_selection=0x7f0d0000;
@@ -1309,11 +1311,10 @@ containing a value of this type.
         public static final int location_creation=0x7f0d0006;
         public static final int location_selection=0x7f0d0007;
         public static final int login=0x7f0d0008;
-        public static final int main=0x7f0d0009;
-        public static final int map_selection=0x7f0d000a;
-        public static final int mygroups=0x7f0d000b;
-        public static final int personal_settings=0x7f0d000c;
-        public static final int register=0x7f0d000d;
+        public static final int map_selection=0x7f0d0009;
+        public static final int mygroups=0x7f0d000a;
+        public static final int personal_settings=0x7f0d000b;
+        public static final int register=0x7f0d000c;
     }
     public static final class string {
         /**  Content description for the action bar "home" affordance. [CHAR LIMIT=NONE] 

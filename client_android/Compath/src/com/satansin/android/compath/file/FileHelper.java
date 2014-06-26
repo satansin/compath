@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.satansin.android.compath.logic.City;
-import com.satansin.android.compath.logic.ImageService;
+import com.satansin.android.compath.logic.MemoryService;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -29,67 +29,108 @@ public class FileHelper {
 	
 	private Context context;
 
-    /** SD卡是否存在**/
-    private boolean hasSD = false;
+    private File sdRootDir;
+    private File imgRootDir;
+    private File originImgDir;
+    private File thumbHImgDir;
+    private File thumbLImgDir;
+    private File usrRootDir;
 
-    /** SD卡的路径**/
-    private String SDPATH;
-
-//    /** 当前程序包的路径**/
-//    private String FILESPATH;
-    
+    private static final String DIRNAME_ROOT = "LocChat";
     private static final String FILENAME_SESSION = "ssn";
     private static final String FILENAME_CITIES = "cty";
     private static final String DIRNAME_IMAGE = "img";
     private static final String DIRNAME_IMAGE_ORIGIN = "ori";
-    private static final String DIRNAME_IMAGE_THUMB_ICON = "tmi";
+    private static final String DIRNAME_IMAGE_THUMB_H = "tbh";
+    private static final String DIRNAME_IMAGE_THUMB_L = "tbl";
+    private static final String DIRNAME_USR = "usr";
+	private static final String FILENAME_HISTORY_MESSAGES = "hms";
     
-    static final int OBJECT_SESSION = 1;
+    public static final int OBJECT_SESSION = 1;
+	public static final int OBJECT_CITY_LIST = 2;
+	public static final int OBJECT_HISTORY_MESSAGES = 3;
 
-	static final int OBJECT_CITY_LIST = 2;
-
-    public FileHelper(Context context) {
+    public FileHelper(Context context) throws StorageNotFoundException {
         this.context = context;
-        hasSD = Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
-        SDPATH = Environment.getExternalStorageDirectory().getPath() + "/Compath";
-//        FILESPATH = this.context.getFilesDir().getPath();
+        boolean hasSD = Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
+        if (!hasSD) {
+			throw new StorageNotFoundException();
+		}
+
+//      FILESPATH = this.context.getFilesDir().getPath();
         
-        File sdDir = new File(SDPATH);
-        if (!sdDir.exists()) {
-			sdDir.mkdir();
+        sdRootDir = new File(Environment.getExternalStorageDirectory(), DIRNAME_ROOT);
+        if (!sdRootDir.exists()) {
+        	sdRootDir.mkdir();
 		}
         
-        File imageDir = new File(SDPATH + "/" + DIRNAME_IMAGE);
-        if (!imageDir.exists()) {
-			imageDir.mkdir();
+        imgRootDir = new File(sdRootDir, DIRNAME_IMAGE);
+        if (!imgRootDir.exists()) {
+        	imgRootDir.mkdir();
 		}
         
-        File imageOriginDir = new File(SDPATH + "/" + DIRNAME_IMAGE + "/" + DIRNAME_IMAGE_ORIGIN);
-        if (!imageOriginDir.exists()) {
-        	imageOriginDir.mkdir();
+        originImgDir = new File(imgRootDir, DIRNAME_IMAGE_ORIGIN);
+        if (!originImgDir.exists()) {
+        	originImgDir.mkdir();
 		}
         
-        File imageThumbIconDir = new File(SDPATH + "/" + DIRNAME_IMAGE + "/" + DIRNAME_IMAGE_THUMB_ICON);
-        if (!imageThumbIconDir.exists()) {
-        	imageThumbIconDir.mkdir();
+        thumbHImgDir = new File(imgRootDir, DIRNAME_IMAGE_THUMB_H);
+        if (!thumbHImgDir.exists()) {
+        	thumbHImgDir.mkdir();
 		}
+        
+        thumbLImgDir = new File(imgRootDir, DIRNAME_IMAGE_THUMB_L);
+        if (!thumbLImgDir.exists()) {
+        	thumbLImgDir.mkdir();
+		}
+        
+        usrRootDir = new File(sdRootDir, DIRNAME_USR);
+        if (!usrRootDir.exists()) {
+        	usrRootDir.mkdir();
+		}
+        
     }
     
-    private String getFilePath(int objectType) {
+    private File getFile(int objectType) {
     	switch (objectType) {
 		case OBJECT_SESSION:
-			return (SDPATH + "/" + FILENAME_SESSION);
+			return new File(sdRootDir, FILENAME_SESSION);
 
 		default:
 			break;
 		}
-    	return "";
+    	return null;
+    }
+    
+    private File getUsrDir(String usrname) throws IOException {
+		File usrDir = new File(usrRootDir, usrname);
+		if (!usrDir.exists()) {
+        	usrDir.mkdir();
+		}
+		File historyFile = new File(usrDir, FILENAME_HISTORY_MESSAGES);
+		if (!historyFile.exists()) {
+			historyFile.createNewFile();
+			ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(historyFile));
+			stream.writeObject(0);
+			stream.close();
+		}
+		return usrDir;
+    }
+    
+    private InputStream getUsrFileInputStream(int objectType, String usrname) throws IOException {
+    	switch (objectType) {
+		case OBJECT_HISTORY_MESSAGES:
+			return getSDFileInputStream(getUsrDir(usrname), FILENAME_HISTORY_MESSAGES);
+
+		default:
+			return null;
+		}
     }
     
     private InputStream getFileInputStream(int objectType) throws IOException {
     	switch (objectType) {
 		case OBJECT_SESSION:
-			return getSDFileInputStream(FILENAME_SESSION);
+			return getSDFileInputStream(sdRootDir, FILENAME_SESSION);
 		case OBJECT_CITY_LIST:
 			return getAssetsFileInputStream(FILENAME_CITIES);
 		default:
@@ -98,10 +139,20 @@ public class FileHelper {
     	return null;
     }
     
+    private OutputStream getUsrFileOutputStream(int objectType, String usrname) throws IOException {
+    	switch (objectType) {
+		case OBJECT_HISTORY_MESSAGES:
+			return getSDFileOutputStream(getUsrDir(usrname), FILENAME_HISTORY_MESSAGES);
+
+		default:
+			return null;
+		}
+    }
+    
     private OutputStream getFileOutputStream(int objectType) throws IOException {
     	switch (objectType) {
 		case OBJECT_SESSION:
-			return getSDFileOutputStream(FILENAME_SESSION);
+			return getSDFileOutputStream(sdRootDir, FILENAME_SESSION);
 		case OBJECT_CITY_LIST:
 			return null;
 		default:
@@ -110,22 +161,16 @@ public class FileHelper {
     	return null;
     }
 	
-	private OutputStream getSDFileOutputStream(String fileName) throws IOException {
-		if (!hasSD) {
-			return null;
-		}
-		File file = new File(SDPATH + "/" + fileName);
+	private OutputStream getSDFileOutputStream(File rootDir, String fileName) throws IOException {
+		File file = new File(rootDir, fileName);
 		if (!file.exists()) {
 			file.createNewFile();
 		}
 		return new FileOutputStream(file);
 	}
 
-	private InputStream getSDFileInputStream(String fileName) throws IOException {
-		if (!hasSD) {
-			return null;
-		}
-		File file = new File(SDPATH + "/" + fileName);
+	private InputStream getSDFileInputStream(File rootDir, String fileName) throws IOException {
+		File file = new File(rootDir, fileName);
 		if (!file.exists()) {
 			return null;
 		}
@@ -135,111 +180,49 @@ public class FileHelper {
 	private InputStream getAssetsFileInputStream(String fileName) throws IOException {
 		return context.getAssets().open(fileName);
 	}
-	
-//    /**
-//     * 在SD卡上创建文件
-//     * 
-//     * @throws IOException
-//     */
-//    public File createSDFile(String fileName) throws IOException {
-//        File file = new File(SDPATH + "/" + fileName);
-//        if (!file.exists()) {
-//            file.createNewFile();
-//        }
-//        return file;
-//    }
-//
-//    /**
-//     * 删除SD卡上的文件
-//     * 
-//     * @param fileName
-//     */
-//    public boolean deleteSDFile(String fileName) {
-//        File file = new File(SDPATH + "/" + fileName);
-//        if (file == null || !file.exists() || file.isDirectory())
-//            return false;
-//        return file.delete();
-//    }
-//
-//    /**
-//     * 读取SD卡中文本文件
-//     * 
-//     * @param fileName
-//     * @retur
-//     */
-//    public String readSDFile(String fileName) {
-//        StringBuffer sb = new StringBuffer();
-//        File file = new File(SDPATH + "/" + fileName);
-//        try {
-//            FileInputStream fis = new FileInputStream(file);
-//            int c;
-//            while ((c = fis.read()) != -1) {
-//                sb.append((char) c);
-//            }
-//            fis.close();
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return sb.toString();
-//    }
-//
-//    public String getFILESPATH() {
-//        return FILESPATH;
-//    }
-//
-//    public String getSDPATH() {
-//        return SDPATH;
-//    }
-//
-//    public boolean hasSD() {
-//        return hasSD; 
-//    }
 
-	public Object readObjectFromFile(int objectType) {
-		try {
-			InputStream stream = getFileInputStream(objectType);
-			if (stream == null) {
-				return null;
-			}
-
-			ObjectInputStream objectInputStream = new ObjectInputStream(stream);
-			Object object = objectInputStream.readObject();
-
-			switch (objectType) {
-			case OBJECT_SESSION:
-				object = (Session) object;
-				break;
-			default:
-				break;
-			}
-			objectInputStream.close();
-			return object;
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
-	public boolean writeObjectToFile(Object object, int objectType) {
-		try {
-			OutputStream stream = getFileOutputStream(objectType);
-			if (stream == null) {
-				return false;
-			}
-			ObjectOutputStream objectOutputStream = new ObjectOutputStream(stream);
-			objectOutputStream.writeObject(object);
-			objectOutputStream.close();
-			return true;
-		} catch (Exception e) {
-			return false;
-		}
-	}
+//	public Object readObjectFromFile(int objectType) {
+//		try {
+//			InputStream stream = getFileInputStream(objectType);
+//			if (stream == null) {
+//				return null;
+//			}
+//
+//			ObjectInputStream objectInputStream = new ObjectInputStream(stream);
+//			Object object = objectInputStream.readObject();
+//
+//			switch (objectType) {
+//			case OBJECT_SESSION:
+//				object = (Session) object;
+//				break;
+//			default:
+//				break;
+//			}
+//			objectInputStream.close();
+//			return object;
+//		} catch (Exception e) {
+//			return null;
+//		}
+//	}
+//
+//	public boolean writeObjectToFile(Object object, int objectType) {
+//		try {
+//			OutputStream stream = getFileOutputStream(objectType);
+//			if (stream == null) {
+//				return false;
+//			}
+//			ObjectOutputStream objectOutputStream = new ObjectOutputStream(stream);
+//			objectOutputStream.writeObject(object);
+//			objectOutputStream.close();
+//			return true;
+//		} catch (Exception e) {
+//			return false;
+//		}
+//	}
 
 	public void deleteObject(int objectType) {
 		try {
-			File objectFile = new File(getFilePath(objectType));
+			File objectFile = getFile(objectType);
 			if (objectFile.exists()) {
 				objectFile.delete();
 			}
@@ -283,55 +266,122 @@ public class FileHelper {
 		private static final long serialVersionUID = 5247494384157415L;
 		String usrname;
 		String session;
-		public Session(String usrname, String session) {
+		String iconUrl;
+		public Session(String usrname, String session, String iconUrl) {
 			this.usrname = usrname;
 			this.session = session;
+			this.iconUrl = iconUrl;
 		}
 	}
     
-    private String getImageFilePath(String url, int quality) {
-    	String[] split = url.split("/");
-    	String fileName = split[split.length - 1];
-    	String parent = "";
+    private File getImageFile(String fileName, int quality) {
+    	File parent = null;
     	switch (quality) {
-		case ImageService.ORIGIN:
-			parent = DIRNAME_IMAGE_ORIGIN;
+		case MemoryService.IMG_ORIGIN:
+			parent = originImgDir;
 			break;
-		case ImageService.THUMB_ICON:
-			parent = DIRNAME_IMAGE_THUMB_ICON;
+		case MemoryService.IMG_THUMB_H:
+			parent = thumbHImgDir;
+			break;
+		case MemoryService.IMG_THUMB_L:
+			parent = thumbLImgDir;
 			break;
 		default:
-			break;
-		}
-    	Log.w("image_path", (SDPATH + "/" + DIRNAME_IMAGE + "/" + parent + "/" + fileName));
-    	return (SDPATH + "/" + DIRNAME_IMAGE + "/" + parent + "/" + fileName);
-    }
-
-	public Bitmap getLocalImage(String url, int quality) {
-		try {
-			FileInputStream stream = new FileInputStream(getImageFilePath(url, quality));
-			Options options = new Options();
-			options.inSampleSize = 1;
-			Bitmap bitmap = BitmapFactory.decodeStream(stream, null, options);
-			stream.close();
-			return bitmap;
-		} catch (Exception e) {
-			e.printStackTrace();
 			return null;
 		}
+    	File imgFile = new File(parent, fileName);
+    	if (!imgFile.exists()) {
+			return null;
+		}
+    	Log.w("image_path", imgFile.getPath());
+    	return imgFile;
+    }
+
+	public Bitmap getLocalImage(String fileName, int quality) throws IOException {
+		File imgFile = getImageFile(fileName, quality);
+		if (imgFile == null) {
+			throw new IOException();
+		}
+		FileInputStream stream = new FileInputStream(getImageFile(fileName, quality));
+		Options options = new Options();
+		options.inSampleSize = 1;
+		Bitmap bitmap = BitmapFactory.decodeStream(stream, null, options);
+		stream.close();
+		return bitmap;
 	}
 	
-	public boolean putLocalImage(String url, Bitmap bitmap, int quality) {
-		try {
-			File file = new File(getImageFilePath(url, quality));
-			BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(file));
-			bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream); // TODO format and quality selection
-			stream.flush();
-			stream.close();
-		} catch (Exception e) {
-			return false;
+	public boolean putLocalImage(String fileName, Bitmap bitmap, int quality) throws IOException {
+		File imgFile = getImageFile(fileName, quality);
+		if (imgFile == null) {
+			throw new IOException();
 		}
+//		String[] fileNameSplit = fileName.split("\\.");
+//		if (fileNameSplit.length <= 1) {
+//			return false;
+//		}
+//		switch (fileNameSplit[fileNameSplit.length - 1]) {
+//		case value:
+//			
+//			break;
+//
+//		default:
+//			break;
+//		}
+		BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(imgFile));
+		bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream); // TODO format and quality selection
+		stream.flush();
+		stream.close();
 		return true;
+	}
+
+	private ObjectInputStream inputStream;
+	private ObjectOutputStream outputStream;
+	public void openSerialFile(int objectType) throws IOException {
+		inputStream = new ObjectInputStream(getFileInputStream(objectType));
+		outputStream = new ObjectOutputStream(getFileOutputStream(objectType));
+	}
+	
+	public void openUsrSerialFile(int objectType, String usrname) throws IOException {
+		inputStream = new ObjectInputStream(getUsrFileInputStream(objectType, usrname));
+		outputStream = new ObjectOutputStream(getUsrFileOutputStream(objectType, usrname));
+	}
+
+	public int getIntFromSerialFile() throws Exception {
+		Object object = inputStream.readObject();
+		if (object == null) {
+			throw new IOException();
+		}
+		int result = 0;
+		try {
+			result = (int) object;
+		} catch (Exception e) {
+			throw new ClassCastException();
+		}
+		return result;
+	}
+
+	public Object getObjectFromSerialFile() throws Exception {
+		Object object = inputStream.readObject();
+		if (object == null) {
+			throw new IOException();
+		}
+		return object;
+	}
+
+	public boolean writeObjectToSerialFile(Object object) throws IOException {
+		outputStream.writeObject(object);
+		return true;
+	}
+
+	public void closeSerialFile() throws IOException {
+		if (inputStream != null) {
+			inputStream.close();
+			inputStream = null;
+		}
+		if (outputStream != null) {
+			outputStream.close();
+			outputStream = null;
+		}
 	}
     
 }

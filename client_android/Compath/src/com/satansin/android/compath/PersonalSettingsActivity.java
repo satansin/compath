@@ -143,7 +143,10 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		if (requestCode == 0 && resultCode == RESULT_OK) {
 			if (data.hasExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID)) {
 				cityId = data.getIntExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID, 0);
-				((TextView) findViewById(R.id.personal_settings_city)).setText(memoryService.getCityName(cityId));
+				try {
+					((TextView) findViewById(R.id.personal_settings_city)).setText(memoryService.getCityName(cityId));
+				} catch (UnknownErrorException e) {
+				}
 			}
 		}
 	}
@@ -169,11 +172,17 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		@Override
 		protected Bitmap doInBackground(Void... params) {
 			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-			return imageService.getBitmap(iconUrl, ImageService.THUMB_ICON);
+			try {
+				return imageService.getBitmap(iconUrl, ImageService.THUMB_ICON);
+			} catch (UnknownErrorException e) {
+				return null;
+			}
 		}
 		@Override
 		protected void onPostExecute(Bitmap result) {
-			iconImageView.setImageBitmap(result);
+			if (result != null) {
+				iconImageView.setImageBitmap(result);
+			}
 		}
 	}
 	
@@ -204,7 +213,10 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NotLoginException) {
-					ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					try {
+						ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(PersonalSettingsActivity.this, LoginActivity.class);
 					startActivity(intent);
@@ -212,7 +224,10 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			}
 
 			PersonalSettingsActivity.this.cityId = result;
-			cityTextView.setText(memoryService.getCityName(result));
+			try {
+				cityTextView.setText(memoryService.getCityName(result));
+			} catch (UnknownErrorException e) {
+			}
 		}
 	}
 	

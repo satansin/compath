@@ -1,10 +1,11 @@
 package com.satansin.android.compath;
 
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 
 import com.satansin.android.compath.logic.GroupParticipationService;
+import com.satansin.android.compath.logic.ImageService;
 import com.satansin.android.compath.logic.MemoryService;
 import com.satansin.android.compath.logic.Message;
 import com.satansin.android.compath.logic.MessageService;
@@ -18,6 +19,7 @@ import com.satansin.android.compath.util.UITimeGenerator;
 import android.support.v7.app.ActionBarActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -36,6 +38,8 @@ import android.widget.Toast;
 public class DiscussActivity extends ActionBarActivity {
 
 	public static final String EXTRA_DISCUSS_GROUP_ID = "com.satansin.android.compath.DISCUSS_ID";
+	
+	private static final int HISTORY_PAGE_SIZE = 20;
 
 	private int groupId;
 	
@@ -43,6 +47,8 @@ public class DiscussActivity extends ActionBarActivity {
 
 	private EditText inputEditText;
 	private ListView listView;
+	
+	private HashMap<String, Bitmap> iconMaps;
 
 	private List<Message> messageList;
 	private MessageAdapter messageAdapter;
@@ -69,7 +75,19 @@ public class DiscussActivity extends ActionBarActivity {
 			DiscussActivity.this.finish();
 		}
 		groupId = getIntent().getIntExtra(EXTRA_DISCUSS_GROUP_ID, 0);
-		messageList = memoryService.loadHistoryMessage(groupId);
+		
+		iconMaps = new HashMap<String, Bitmap>();
+		
+		messageList = new ArrayList<Message>();
+		try {
+			List<Message> historyList = memoryService.loadHistoryMessage(groupId, 1, HISTORY_PAGE_SIZE);
+			for (int i = historyList.size() - 1; i >= 0; i--) {
+				messageList.add(historyList.get(i));
+				
+				new GetUsrIconTask(historyList.get(i).getIconUrl());
+			}
+		} catch (UnknownErrorException e) {
+		}
 
 		listView = (ListView) findViewById(R.id.discuss_list_view);
 		messageAdapter = new MessageAdapter(this);
@@ -121,7 +139,6 @@ public class DiscussActivity extends ActionBarActivity {
 
 	@Override
 	public void finish() {
-		// TODO right to do like this?
 		receivingThread.stopReceiving();
 		new ExitGroupTask().execute();
 		super.finish();
@@ -151,7 +168,13 @@ public class DiscussActivity extends ActionBarActivity {
 					@Override
 					public void run() {
 						for (Message message : newMessages) {
-//							message = memoryService.insertMessage(message, false); // TODO
+							try {
+								message = memoryService.insertReceivedMessage(message, true);
+							} catch (UnknownErrorException e) {
+							}
+							if (message == null) {
+								continue;
+							}
 							message.setComingMsg(true);
 							appendMessage(message, listView
 									.getLastVisiblePosition() == listView
@@ -178,8 +201,14 @@ public class DiscussActivity extends ActionBarActivity {
 			return;
 		}
 		inputEditText.setText("");
-//		Message message = memoryService.insertSendingMessage(text, groupId, false); // TODO
-		Message message = new Message(0, text, Calendar.getInstance().getTimeInMillis(), false, memoryService.getMyUsrname(), groupId);
+		Message message = null;
+		try {
+			message = memoryService.insertSendingMessage(text, groupId, false);
+		} catch (UnknownErrorException e) {
+		}
+		if (message == null) {
+			return;
+		}
 		appendMessage(message, true);
 
 		SendMessageTask sendMessageTask = new SendMessageTask();
@@ -190,12 +219,13 @@ public class DiscussActivity extends ActionBarActivity {
 
 	private void appendMessage(Message newMessage, boolean rollToBottom) {
 		messageList.add(newMessage);
+		new GetUsrIconTask(newMessage.getIconUrl());
 		messageAdapter.notifyDataSetChanged();
 		if (rollToBottom) {
 			listView.setSelection(listView.getBottom());
 		}
 	}
-
+	
 	private class MessageAdapter extends BaseAdapter {
 
 		private LayoutInflater inflater;
@@ -205,7 +235,7 @@ public class DiscussActivity extends ActionBarActivity {
 		class ViewHolder {
 			public TextView timeTextView;
 			public ImageView iconImageView;
-			public TextView usrnameTextView;
+//			public TextView usrnameTextView;
 			public TextView contentTextView;
 		}
 
@@ -257,8 +287,8 @@ public class DiscussActivity extends ActionBarActivity {
 					.findViewById(R.id.message_item_time);
 			viewHolder.iconImageView = (ImageView) convertView
 					.findViewById(R.id.message_item_icon);
-			viewHolder.usrnameTextView = (TextView) convertView
-					.findViewById(R.id.message_item_usrname);
+//			viewHolder.usrnameTextView = (TextView) convertView
+//					.findViewById(R.id.message_item_usrname);
 			viewHolder.contentTextView = (TextView) convertView
 					.findViewById(R.id.message_item_content);
 			convertView.setTag(viewHolder);
@@ -266,14 +296,42 @@ public class DiscussActivity extends ActionBarActivity {
 			if (showTimeTag) {
 				viewHolder.timeTextView.setText(new UITimeGenerator().getFormattedMessageTime(message.getTime()));
 			}
-			if (message.isComingMsg()) {
-				viewHolder.usrnameTextView.setText(message.getFrom());
-			}
+//			if (message.isComingMsg()) {
+//				viewHolder.usrnameTextView.setText(message.getFrom());
+//			}
 			viewHolder.contentTextView.setText(message.getContent());
+			Bitmap iconBitmap = iconMaps.get(message.getIconUrl());
+			if (iconBitmap != null) {
+				viewHolder.iconImageView.setImageBitmap(iconBitmap);
+			}
 
 			return convertView;
 		}
 
+	}
+	
+	private class GetUsrIconTask extends AsyncTask<Void, Void, Bitmap> {
+		private String url;
+		public GetUsrIconTask(String url) {
+			this.url = url;
+		}
+		@Override
+		protected Bitmap doInBackground(Void... params) {
+			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
+			try {
+				return imageService.getBitmap(url, ImageService.THUMB_ICON);
+			} catch (UnknownErrorException e) {
+				return null;
+			}
+		}
+		@Override
+		protected void onPostExecute(Bitmap result) {
+			if (result == null) {
+				return;
+			}
+			iconMaps.put(url, result);
+			messageAdapter.notifyDataSetChanged();
+		}
 	}
 
 	private class EnterGroupTask extends AsyncTask<Void, Void, Boolean> {
@@ -308,7 +366,10 @@ public class DiscussActivity extends ActionBarActivity {
 							R.string.error_unknown, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NotLoginException) {
-					memoryService.clearSession();
+					try {
+						memoryService.clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
 					startActivity(intent);
@@ -355,7 +416,10 @@ public class DiscussActivity extends ActionBarActivity {
 			if (exception != null) {
 				// TODO: show that the message is not sent
 				if (exception instanceof NotLoginException) {
-					memoryService.clearSession();
+					try {
+						memoryService.clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
 					startActivity(intent);
@@ -398,7 +462,10 @@ public class DiscussActivity extends ActionBarActivity {
 							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NotLoginException) {
-					memoryService.clearSession();
+					try {
+						memoryService.clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
 					startActivity(intent);
@@ -450,7 +517,10 @@ public class DiscussActivity extends ActionBarActivity {
 							R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NotLoginException) {
-					memoryService.clearSession();
+					try {
+						memoryService.clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
 					startActivity(intent);

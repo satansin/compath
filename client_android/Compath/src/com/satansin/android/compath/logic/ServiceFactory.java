@@ -2,7 +2,7 @@ package com.satansin.android.compath.logic;
 
 import android.content.Context;
 
-import com.satansin.android.compath.file.MemoryServiceSerialFileImpl;
+import com.satansin.android.compath.file.MemoryServiceFileImpl;
 import com.satansin.android.compath.qiniu.ImageServiceQiniuImpl;
 import com.satansin.android.compath.socket.FeedServiceSocketImpl;
 import com.satansin.android.compath.socket.GroupCreationServiceSocketImpl;
@@ -37,7 +37,7 @@ public class ServiceFactory {
 	}
 
 	public static MemoryService getMemoryService(Context context) {
-		return MemoryServiceSerialFileImpl.getInstance(context);
+		return MemoryServiceFileImpl.getInstance(context);
 	}
 
 	public static MessageService getMessageService() {
