@@ -1478,6 +1478,7 @@ public class TestServer {
 		result.put(RETURN_TYPE, 201);
 		int session = 0;
 		boolean firstLogin = false;
+		String iconUrl = "";
 
 		boolean valid = false;
 		int id = 0;
@@ -1485,7 +1486,7 @@ public class TestServer {
 			String username = inputJson.getString(PARAM_USRNAME);
 			String password = inputJson.getString(PARAM_PASSWORD);
 			
-			String sql = "select `user`.`id`, `user_detail`.`city_id` " +
+			String sql = "select `user`.`id`, `user_detail`.`city_id`, `user_detail`.`icon_url` " +
 						 "from `user`, `user_detail` " +
 						 "where `user`.`username` = ? and " +
 						 	   "`user`.`password` = ? and " +
@@ -1502,6 +1503,7 @@ public class TestServer {
 				if (city == 0) {
 					firstLogin = true;
 				}
+				iconUrl = resultSet.getString("icon_url");
 			}
 
 			resultSet.close();
@@ -1510,6 +1512,7 @@ public class TestServer {
 			e.printStackTrace();
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
@@ -1517,6 +1520,7 @@ public class TestServer {
 		if (!valid) {
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, "301");
 			return result.toString();
 		}
@@ -1531,6 +1535,7 @@ public class TestServer {
 			e.printStackTrace();
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
@@ -1555,6 +1560,7 @@ public class TestServer {
 			if (session <= 0) {
 				result.put(PARAM_SESSION, "");
 				result.put(PARAM_FIRST_LOGIN, 0);
+				result.put(PARAM_URL, "");
 				result.put(RETURN_ERROR, 300);
 				return result.toString();
 			}
@@ -1562,12 +1568,14 @@ public class TestServer {
 			e.printStackTrace();
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
 		if (!sessionInserted) {
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
@@ -1578,6 +1586,7 @@ public class TestServer {
 		} else {
 			result.put(PARAM_FIRST_LOGIN, 0);
 		}
+		result.put(PARAM_URL, iconUrl);
 		result.put(RETURN_ERROR, 0);
 		return result.toString();
 	}
