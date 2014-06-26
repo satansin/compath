@@ -18,9 +18,10 @@ public final class R {
     }
     public static final class array {
         public static final int alert_create_loc_list=0x7f0c0000;
+        public static final int alert_upload_icon_list=0x7f0c0001;
         /**  台湾 
          */
-        public static final int province_names=0x7f0c0001;
+        public static final int province_names=0x7f0c0002;
     }
     public static final class attr {
         /**  Custom divider drawable to use for elements in the action bar. 
@@ -1362,14 +1363,14 @@ containing a value of this type.
         public static final int action_exit=0x7f0a002d;
         public static final int action_favor=0x7f0a0026;
         public static final int action_finish_creation=0x7f0a002c;
-        public static final int action_forgot_password=0x7f0a0052;
+        public static final int action_forgot_password=0x7f0a0053;
         public static final int action_location_selection=0x7f0a0025;
         public static final int action_logout=0x7f0a002e;
         public static final int action_personal_settings=0x7f0a0029;
         public static final int action_refresh=0x7f0a002b;
-        public static final int action_register=0x7f0a004f;
+        public static final int action_register=0x7f0a0050;
         public static final int action_settings=0x7f0a0028;
-        public static final int action_sign_in=0x7f0a004e;
+        public static final int action_sign_in=0x7f0a004f;
         public static final int action_upload_icon=0x7f0a0030;
         public static final int alert_cancel_message_create=0x7f0a0043;
         public static final int alert_cancel_title=0x7f0a0042;
@@ -1378,23 +1379,24 @@ containing a value of this type.
         public static final int alert_exit_title=0x7f0a0044;
         public static final int alert_negative=0x7f0a0047;
         public static final int alert_positive=0x7f0a0046;
+        public static final int alert_upload_icon_title=0x7f0a0049;
         public static final int app_name=0x7f0a000d;
         public static final int discuss_input_hint=0x7f0a000f;
         public static final int discuss_sending_text=0x7f0a0011;
         public static final int error_cancel_fail_retry=0x7f0a0037;
         public static final int error_create_fail_retry=0x7f0a0034;
         public static final int error_favor_fail_retry=0x7f0a0035;
-        public static final int error_field_required=0x7f0a005a;
-        public static final int error_incorrect_usrname_password=0x7f0a0059;
+        public static final int error_field_required=0x7f0a005b;
+        public static final int error_incorrect_usrname_password=0x7f0a005a;
         public static final int error_invalid_location=0x7f0a0041;
-        public static final int error_invalid_password=0x7f0a0058;
-        public static final int error_invalid_usrname=0x7f0a0057;
+        public static final int error_invalid_password=0x7f0a0059;
+        public static final int error_invalid_usrname=0x7f0a0058;
         public static final int error_locating_timeout=0x7f0a003c;
         public static final int error_name_required=0x7f0a003f;
         public static final int error_name_too_long=0x7f0a0040;
         public static final int error_network_timeout=0x7f0a003a;
         public static final int error_non_loc=0x7f0a003b;
-        public static final int error_repeating_usrname=0x7f0a005b;
+        public static final int error_repeating_usrname=0x7f0a005c;
         public static final int error_set_fail_retry=0x7f0a0036;
         public static final int error_title_required=0x7f0a003d;
         public static final int error_title_too_long=0x7f0a003e;
@@ -1405,17 +1407,17 @@ containing a value of this type.
         public static final int hint_group_title=0x7f0a0012;
         public static final int hint_location_name=0x7f0a0013;
         public static final int image_content_description=0x7f0a0010;
-        public static final int login_progress_signing_in=0x7f0a0053;
-        public static final int login_success=0x7f0a0055;
+        public static final int login_progress_signing_in=0x7f0a0054;
+        public static final int login_success=0x7f0a0056;
         public static final int mygroups_personal_settings=0x7f0a0014;
-        public static final int password_reminder=0x7f0a0051;
-        public static final int prompt_password=0x7f0a004c;
-        public static final int prompt_password_confirm=0x7f0a004d;
+        public static final int password_reminder=0x7f0a0052;
+        public static final int prompt_password=0x7f0a004d;
+        public static final int prompt_password_confirm=0x7f0a004e;
         /**  Strings related to login and register 
          */
-        public static final int prompt_usrname=0x7f0a004b;
-        public static final int register_progress_registering=0x7f0a0054;
-        public static final int register_success=0x7f0a0056;
+        public static final int prompt_usrname=0x7f0a004c;
+        public static final int register_progress_registering=0x7f0a0055;
+        public static final int register_success=0x7f0a0057;
         public static final int success_cancel=0x7f0a0033;
         public static final int success_create=0x7f0a0031;
         public static final int success_favor=0x7f0a0032;
@@ -1427,15 +1429,15 @@ containing a value of this type.
         public static final int title_activity_image_view=0x7f0a0024;
         public static final int title_activity_location_creation=0x7f0a0022;
         public static final int title_activity_location_selection=0x7f0a001c;
-        public static final int title_activity_login=0x7f0a0049;
+        public static final int title_activity_login=0x7f0a004a;
         public static final int title_activity_map_selection=0x7f0a0023;
         public static final int title_activity_mygroups=0x7f0a001e;
         public static final int title_activity_personal_settings=0x7f0a001d;
-        public static final int title_activity_register=0x7f0a004a;
+        public static final int title_activity_register=0x7f0a004b;
         public static final int title_board_fragment=0x7f0a0018;
         public static final int title_consult_fragment=0x7f0a0019;
         public static final int title_person_fragment=0x7f0a001a;
-        public static final int usrname_reminder=0x7f0a0050;
+        public static final int usrname_reminder=0x7f0a0051;
         public static final int welcome_text=0x7f0a000e;
     }
     public static final class style {

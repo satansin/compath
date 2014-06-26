@@ -10,6 +10,9 @@ import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
 
 import android.support.v7.app.ActionBarActivity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
@@ -107,7 +110,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			PersonalSettingsActivity.this.finish();
 			return true;
 		} else if (id == R.id.action_upload_icon) {
-			
+			startIconUploading();
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -117,6 +120,39 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		CompathApplication.getInstance().removeActivity(this);
 		super.onDestroy();
 	}
+	
+	private static final int REQUEST_CODE_CITY = 0;
+	private static final int REQUEST_CODE_IMAGE = 1;
+	private static final int REQUEST_CODE_CAPTURE = 2;
+	private DialogInterface.OnClickListener uploadIconDialogListener = new DialogInterface.OnClickListener() {
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			switch (which) {
+			case 0:
+				Intent galleryIntent = new Intent();
+				galleryIntent.setType("image/*");
+				galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+				startActivityForResult(galleryIntent, REQUEST_CODE_IMAGE);
+				break;
+			case 1:
+				Intent captureIntent = new Intent();
+				toMapSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LAT, location.getLatitude());
+				toMapSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LON, location.getLongitude());
+				startActivityForResult(toMapSelectionIntent, REQUEST_CODE_LOCATION_CREATION);
+				break;
+			default:
+				break;
+			}
+		}
+	};
+	
+	private void startIconUploading() {
+		Builder uploadIconBuilder = new Builder(this);
+		uploadIconBuilder.setTitle(getString(R.string.alert_upload_icon_title));
+		uploadIconBuilder.setItems(getResources().getStringArray(R.array.alert_upload_icon_list), uploadIconDialogListener);
+		AlertDialog createLocAlertDialog = uploadIconBuilder.create();
+		createLocAlertDialog.show();
+	}
 
 	private void startCitySelectionActivity() {
 		Intent toCitySelectionIntent = new Intent(this,
@@ -125,7 +161,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 				CitySelectionActivity.EXTRA_START_FROM_PERSONAL_SETTINGS, true);
 		toCitySelectionIntent.putExtra(
 				CitySelectionActivity.EXTRA_CITY_ID, cityId);
-		startActivityForResult(toCitySelectionIntent, 0);
+		startActivityForResult(toCitySelectionIntent, REQUEST_CODE_CITY);
 	}
 
 	private void startMygroupsActivity() {
@@ -140,7 +176,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == 0 && resultCode == RESULT_OK) {
+		if (requestCode == REQUEST_CODE_CITY && resultCode == RESULT_OK) {
 			if (data.hasExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID)) {
 				cityId = data.getIntExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID, 0);
 				((TextView) findViewById(R.id.personal_settings_city)).setText(memoryService.getCityName(cityId));

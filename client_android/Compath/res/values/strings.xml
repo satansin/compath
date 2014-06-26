@@ -61,10 +61,15 @@
     <string name="alert_positive">是</string>
     <string name="alert_negative">否</string>
     <string name="alert_create_loc_title">创建地点</string>
+    <string name="alert_upload_icon_title">上传头像</string>
 
     <string-array name="alert_create_loc_list">
         <item>当前位置</item>
         <item>自己选择</item>
+    </string-array>
+    <string-array name="alert_upload_icon_list">
+        <item>选择本地相册</item>
+        <item>拍照</item>
     </string-array>
     <string-array name="province_names">
         <item>北京</item>
