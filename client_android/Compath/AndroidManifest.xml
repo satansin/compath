@@ -39,6 +39,15 @@
     </uses-permission>
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
+
+    <!-- 以下四个为友盟新增的 permission  -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- V1.2.3新增的权限, GET_TASKS用于检测APP是否处于前台、是否活着；REORDER_TASKS用于将APP切换到前台  -->
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
+
     <application
         android:name="com.satansin.android.compath.CompathApplication"
         android:allowBackup="true"
