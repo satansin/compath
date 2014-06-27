@@ -194,6 +194,16 @@
             </intent-filter>
         </service>
         <service android:name="com.umeng.message.UmengIntentService" />
+
+        <!-- 友盟的App信息  -->
+        <meta-data
+            android:name="UMENG_APPKEY"
+            android:value="53a7e24656240bca2a023ecc" >
+        </meta-data>
+        <meta-data
+            android:name="UMENG_MESSAGE_SECRET"
+            android:value="954a321b39ec5fa0b575e82d41c8b8f5" >
+        </meta-data>
     </application>
 
 </manifest>
