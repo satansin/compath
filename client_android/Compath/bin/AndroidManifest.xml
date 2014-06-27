@@ -39,6 +39,15 @@
     </uses-permission>
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
+
+    <!-- 以下四个为友盟新增的 permission  -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- V1.2.3新增的权限, GET_TASKS用于检测APP是否处于前台、是否活着；REORDER_TASKS用于将APP切换到前台  -->
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
+
     <application
         android:name="com.satansin.android.compath.CompathApplication"
         android:allowBackup="true"
@@ -135,6 +144,73 @@
             android:label="@string/title_activity_image_view"
             android:theme="@style/ImageViewTheme" >
         </activity>
+
+        <!-- 友盟的组件  -->
+        <receiver
+            android:name="com.umeng.message.NotificationProxyBroadcastReceiver"
+            android:exported="false" >
+        </receiver>
+        <receiver android:name="com.umeng.message.RegistrationReceiver" >
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_REMOVED" />
+
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.umeng.message.UmengBroadcastReceiver" >
+            <intent-filter>
+                <action android:name="org.agoo.android.intent.action.RECEIVE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.satansin.android.compath.intent.action.COMMAND" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.agoo.android.intent.action.RE_ELECTION_V2" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name="com.umeng.message.UmengService"
+            android:exported="true"
+            android:process=":umengService_v1" >
+            <intent-filter>
+                <action android:name="com.satansin.android.compath.intent.action.START" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.satansin.android.compath.intent.action.COCKROACH" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.agoo.android.intent.action.PING" />
+            </intent-filter>
+        </service>
+        <service
+            android:name="org.android.agoo.service.ElectionService"
+            android:exported="true"
+            android:process=":umengService_v1" >
+            <intent-filter>
+                <action android:name="org.agoo.android.intent.action.ELECTION_V2" />
+            </intent-filter>
+        </service>
+        <service android:name="com.umeng.message.UmengIntentService" />
+
+        <!-- 友盟的App信息  -->
+        <meta-data
+            android:name="UMENG_APPKEY"
+            android:value="53a7e24656240bca2a023ecc" >
+        </meta-data>
+        <meta-data
+            android:name="UMENG_MESSAGE_SECRET"
+            android:value="954a321b39ec5fa0b575e82d41c8b8f5" >
+        </meta-data>
+
+        <!-- 用Channel 来标识APP的推广渠道，作为推送消息时给用户分组的一个维度。 -->
+        <meta-data
+            android:name="UMENG_CHANNEL"
+            android:value="ChannelA" >
+        </meta-data>
+        
     </application>
 
 </manifest>

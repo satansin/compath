@@ -2,6 +2,7 @@ package com.satansin.android.compath;
 
 import com.satansin.android.compath.logic.MemoryService;
 import com.satansin.android.compath.logic.ServiceFactory;
+import com.umeng.message.PushAgent;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -17,6 +18,9 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		PushAgent mPushAgent = PushAgent.getInstance(context);
+		mPushAgent.enable();
 		
 		new WaitTask().execute();
 		
