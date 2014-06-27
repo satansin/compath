@@ -204,6 +204,13 @@
             android:name="UMENG_MESSAGE_SECRET"
             android:value="954a321b39ec5fa0b575e82d41c8b8f5" >
         </meta-data>
+
+        <!-- 用Channel 来标识APP的推广渠道，作为推送消息时给用户分组的一个维度。 -->
+        <meta-data
+            android:name="UMENG_CHANNEL"
+            android:value="ChannelA" >
+        </meta-data>
+        
     </application>
 
 </manifest>
