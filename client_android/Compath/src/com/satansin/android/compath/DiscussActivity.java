@@ -29,14 +29,10 @@ import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.app.ActionBarActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,18 +47,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.satansin.android.compath.logic.GroupParticipationService;
-import com.satansin.android.compath.logic.MemoryService;
-import com.satansin.android.compath.logic.Message;
-import com.satansin.android.compath.logic.MessageService;
-import com.satansin.android.compath.logic.MygroupsService;
-import com.satansin.android.compath.logic.NetworkTimeoutException;
-import com.satansin.android.compath.logic.NotLoginException;
-import com.satansin.android.compath.logic.PictureMessage;
-import com.satansin.android.compath.logic.ServiceFactory;
-import com.satansin.android.compath.logic.UnknownErrorException;
-import com.satansin.android.compath.util.UITimeGenerator;
-
 public class DiscussActivity extends ActionBarActivity {
 
 	public static final String EXTRA_DISCUSS_GROUP_ID = "com.satansin.android.compath.DISCUSS_ID";
@@ -71,9 +55,9 @@ public class DiscussActivity extends ActionBarActivity {
 
 	private int groupId;
 	
-	private EditText inputEditText;
-	private ListView listView;
-	private SwipeRefreshLayout swipeRefreshLayout;
+	private EditText mInputEditText;
+	private ListView mListView;
+	private SwipeRefreshLayout mSwipeRefreshLayout;
 	private TextView headerTextView;
 	private ImageView sendButtonImageView;
 	private MenuItem favorMenuItem;
@@ -120,20 +104,19 @@ public class DiscussActivity extends ActionBarActivity {
 		
 		messageList = new ArrayList<Message>();
 
-		listView = (ListView) findViewById(R.id.discuss_list_view);
+		mListView = (ListView) findViewById(R.id.discuss_list_view);
 		View headerView = getLayoutInflater().inflate(R.layout.header_discuss, null);
 		headerTextView = (TextView) headerView.findViewById(R.id.discuss_header_text);
-		listView.addHeaderView(headerView);
+		mListView.addHeaderView(headerView);
 		
 		messageAdapter = new MessageAdapter(this);
-		listView.setAdapter(messageAdapter);
-		listView.setSelection(listView.getBottom());
+		mListView.setAdapter(messageAdapter);
 		
-		swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe);
+		mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe);
 		// 顶部刷新的样式 
-		swipeRefreshLayout.setColorScheme(R.color.holo_red_light, R.color.holo_green_light,  
+		mSwipeRefreshLayout.setColorScheme(R.color.holo_red_light, R.color.holo_green_light,  
                 R.color.holo_blue_bright, R.color.holo_orange_light);
-		swipeRefreshLayout.setOnRefreshListener(new OnRefreshListener() {
+		mSwipeRefreshLayout.setOnRefreshListener(new OnRefreshListener() {
 			@Override
 			public void onRefresh() {
 				loadHistoryMessages();
@@ -148,8 +131,8 @@ public class DiscussActivity extends ActionBarActivity {
 			}
 		});
 
-		inputEditText = (EditText) findViewById(R.id.discuss_input);
-		inputEditText.addTextChangedListener(new TextWatcher() {
+		mInputEditText = (EditText) findViewById(R.id.discuss_input);
+		mInputEditText.addTextChangedListener(new TextWatcher() {
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
 			}
@@ -159,7 +142,7 @@ public class DiscussActivity extends ActionBarActivity {
 			}
 			@Override
 			public void afterTextChanged(Editable s) {
-				String text = inputEditText.getText().toString();
+				String text = mInputEditText.getText().toString();
 				if (text.length() == 0) {
 					sendButtonImageView.setImageResource(R.drawable.send_disabled);
 				} else {
@@ -197,6 +180,8 @@ public class DiscussActivity extends ActionBarActivity {
 
 		receivingThread = new ReceivingThread();
 		receivingThread.start();
+
+		mListView.setSelection(messageList.size());
 	}
 
 	@Override
@@ -253,6 +238,7 @@ public class DiscussActivity extends ActionBarActivity {
 	public void finish() {
 		receivingThread.stopReceiving();
 		new ExitGroupTask().execute();
+		setResult(RESULT_OK);
 		super.finish();
 	}
 	
@@ -268,7 +254,7 @@ public class DiscussActivity extends ActionBarActivity {
 			List<Message> historyList = memoryService.
 					loadHistoryMessage(groupId, currentSize + 1, currentSize + HISTORY_PAGE_SIZE);
 			
-			swipeRefreshLayout.setRefreshing(false);
+			mSwipeRefreshLayout.setRefreshing(false);
 			if (currentSize > 0 && historyList.size() <= 0) {
 				headerTextView.setText(getString(R.string.error_non_history_msg));
 			}
@@ -294,7 +280,7 @@ public class DiscussActivity extends ActionBarActivity {
 							.receiveMessages(groupId, memoryService.getMySession());
 				} catch (Exception e) {
 				}
-				listView.post(new Runnable() {
+				mListView.post(new Runnable() {
 					@Override
 					public void run() {
 						for (Message message : newMessages) {
@@ -306,8 +292,8 @@ public class DiscussActivity extends ActionBarActivity {
 								continue;
 							}
 							message.setComingMsg(true);
-							appendMessageOnUI(message, listView
-									.getLastVisiblePosition() == listView
+							appendMessageOnUI(message, mListView
+									.getLastVisiblePosition() == mListView
 									.getCount() - 1);
 						}
 					}
@@ -326,11 +312,11 @@ public class DiscussActivity extends ActionBarActivity {
 	}
 	
 	private void attemptSending() {
-		String text = inputEditText.getText().toString();
+		String text = mInputEditText.getText().toString();
 		if (text.length() == 0) {
 			return;
 		}
-		inputEditText.setText("");
+		mInputEditText.setText("");
 		Message message = null;
 		try {
 			message = memoryService.insertSendingMessage(text, groupId);
@@ -352,7 +338,7 @@ public class DiscussActivity extends ActionBarActivity {
 		new GetUsrIconTask(newMessage.getIconUrl()).execute();
 		messageAdapter.notifyDataSetChanged();
 		if (rollToBottom) {
-			listView.setSelection(listView.getBottom());
+			mListView.setSelection(mListView.getBottom());
 		}
 	}
 	

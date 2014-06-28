@@ -19,6 +19,15 @@
             android:headerDividersEnabled="true" >
         </ListView>
     </android.support.v4.widget.SwipeRefreshLayout>
+    
+    <TextView
+        android:id="@+id/feed_non_feed_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="@string/error_non_feed"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:visibility="gone" />
 
     <!--
     <com.satansin.android.compath.RefreshableListView

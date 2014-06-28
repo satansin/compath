@@ -123,13 +123,14 @@ public class LocationSelectionActivity extends ActionBarActivity {
         currentLocation = new Location(
 				getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_ID, 0),
 				getIntent().getStringExtra(FeedActivity.EXTRA_LOCATION_NAME),
-				getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_LAT, (int)(32.056774 * 1E6)),
-				getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_LON, (int)(118.780659 * 1E6)));
+				getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_LAT, 0),
+				getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_LON, 0));
         
         if (currentLocation.getLatitude() != 0 && currentLocation.getLongitude() != 0) {
             mMapController.setCenter(new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude()));
         } else {
-        	mMapController.setCenter(new GeoPoint((int)(32.056774 * 1E6), (int)(118.780659 * 1E6)));
+        	// 设置默认位置为天安门
+        	mMapController.setCenter(new GeoPoint((int)(39.909604 * 1E6), (int)(116.397228 * 1E6)));
 		}
         
         RelativeLayout locationSelectionLayout = (RelativeLayout) findViewById(R.id.location_selection_layout);
@@ -151,7 +152,10 @@ public class LocationSelectionActivity extends ActionBarActivity {
         	@Override
     		public boolean onTap(int index){
     			OverlayItem item = getItem(index);
-    			currentLocation = locItemMap.get(item);
+    			Location selectedLocation = locItemMap.get(item);
+    			if (selectedLocation != null) {
+        			currentLocation = locItemMap.get(item);
+				}
     			locationNameTextView = (TextView) findViewById(R.id.location_selection_text);
     			locationNameTextView.setText(currentLocation.getName());
     			

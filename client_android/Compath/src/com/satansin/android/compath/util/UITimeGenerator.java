@@ -20,21 +20,21 @@ public class UITimeGenerator {
 
 		Calendar current = Calendar.getInstance();
 		if (time.get(Calendar.YEAR) != current.get(Calendar.YEAR)) {
-			return (detail ? new SimpleDateFormat("yyyy-M-d hh:mm", Locale.getDefault()).format(new Date(timeInMillis)) :
+			return (detail ? new SimpleDateFormat("yyyy-M-d HH:mm", Locale.getDefault()).format(new Date(timeInMillis)) :
 					new SimpleDateFormat("yyyy-M-d", Locale.getDefault()).format(new Date(timeInMillis)));
 		} else {
 			if (!(time.get(Calendar.MONTH) == current.get(Calendar.MONTH) && (time
 					.get(Calendar.DATE) == current.get(Calendar.DATE)))) {
-				return (detail ? new SimpleDateFormat("M-d hh:mm", Locale.getDefault()).format(new Date(timeInMillis)) :
+				return (detail ? new SimpleDateFormat("M-d HH:mm", Locale.getDefault()).format(new Date(timeInMillis)) :
 					new SimpleDateFormat("M-d", Locale.getDefault()).format(new Date(timeInMillis)));
 			} else {
-				return new SimpleDateFormat("hh:mm", Locale.getDefault()).format(new Date(timeInMillis));
+				return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(timeInMillis));
 			}
 		}
 	}
 	
 	private String getCompactFormattedTime(long timeInMillis, boolean detail) {
-		return (detail ? new SimpleDateFormat("yyyyMMddhhmmss", Locale.getDefault()).format(new Date(timeInMillis)) :
+		return (detail ? new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(new Date(timeInMillis)) :
 				new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(new Date(timeInMillis)));
 	}
 

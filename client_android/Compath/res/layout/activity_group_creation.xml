@@ -37,6 +37,7 @@
         android:layout_alignTop="@+id/group_creation_location_reminder"
         android:layout_marginLeft="14dp"
         android:layout_toRightOf="@+id/group_creation_location_reminder"
-        android:gravity="center_vertical" />
+        android:gravity="center_vertical"
+        android:textColor="@color/holo_orange_dark" />
 
 </RelativeLayout>

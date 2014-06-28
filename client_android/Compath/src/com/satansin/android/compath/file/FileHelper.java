@@ -361,7 +361,7 @@ public class FileHelper {
 		}
 		int result = 0;
 		try {
-			result = (int) object;
+			result = (Integer) object;
 		} catch (Exception e) {
 			throw new ClassCastException();
 		}

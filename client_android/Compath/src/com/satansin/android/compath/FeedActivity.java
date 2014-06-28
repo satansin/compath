@@ -79,6 +79,10 @@ public class FeedActivity extends ActionBarActivity {
 	 * Request code for location creation.
 	 */
 	private static final int REQUEST_CODE_LOCATION_CREATION = 3;
+	/**
+	 * Request code for entering a group right after it is created.
+	 */
+	private static final int REQUEST_CODE_GROUP_ENTERING = 4;
 
 	/**
 	 * Current location the user are at.<br>
@@ -91,6 +95,7 @@ public class FeedActivity extends ActionBarActivity {
 	private FeedItemAdapter mFeedAdapter;
 	private ListView mListView;
 	private SwipeRefreshLayout mSwipeRefreshLayout;
+	private TextView nonFeedReminderTextView;
 	
 	private GetFeedTask mGetFeedTask;
 	
@@ -193,6 +198,8 @@ public class FeedActivity extends ActionBarActivity {
 				executeRefresh(false, false);
 			}
 		});
+		
+		nonFeedReminderTextView = (TextView) findViewById(R.id.feed_non_feed_text);
 		
 		/**
          * 使用地图sdk前需先初始化BMapManager.
@@ -358,7 +365,7 @@ public class FeedActivity extends ActionBarActivity {
 		if (requestCode == REQUEST_CODE_GROUP_CREATION && resultCode == RESULT_OK) {
 			Intent toDiscussIntent = new Intent(this, DiscussActivity.class);
 			toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, data.getIntExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, 0));
-			startActivity(toDiscussIntent);
+			startActivityForResult(toDiscussIntent, REQUEST_CODE_GROUP_ENTERING);
 		} else if (requestCode == REQUEST_CODE_LOCATION_SELECTION && resultCode == RESULT_OK) {
 			refreshWithLocationFromIntent(data);
 		} else if (requestCode == REQUEST_CODE_PERSONAL_SETTINGS && resultCode == RESULT_OK) {
@@ -370,6 +377,8 @@ public class FeedActivity extends ActionBarActivity {
 			}
 		} else if (requestCode == REQUEST_CODE_LOCATION_CREATION && resultCode == RESULT_OK) {
 			refreshWithLocationFromIntent(data);
+		} else if (requestCode == REQUEST_CODE_GROUP_ENTERING && resultCode == RESULT_OK) {
+			executeRefresh(true, false);
 		}
 	}
 	
@@ -444,8 +453,14 @@ public class FeedActivity extends ActionBarActivity {
 			FeedActivity.this.setTitle(mLocation.getName());
 			
 			if (result.size() == 0) {
+				mListView.setVisibility(View.GONE);
+				nonFeedReminderTextView.setVisibility(View.VISIBLE);
 				return;
 			}
+			
+			mListView.setVisibility(View.VISIBLE);
+			nonFeedReminderTextView.setVisibility(View.GONE);
+			
 			mFeedList.clear();
 			for (int i = 0; i < result.size(); i++) {
 				Group group = result.get(i);

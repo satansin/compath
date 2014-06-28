@@ -47,12 +47,16 @@ public class GroupCreationActivity extends ActionBarActivity {
 		
 		locationId = getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_ID, 0);
 		locationName = getIntent().getStringExtra(FeedActivity.EXTRA_LOCATION_NAME);
-		locationLat = getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_LON, 0);
+		locationLat = getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_LAT, 0);
 		locationLon = getIntent().getIntExtra(FeedActivity.EXTRA_LOCATION_LON, 0);
 
 		locationTextView = (TextView) findViewById(R.id.group_creation_location_text);
-		// TODO ±äÉ«
-		locationTextView.setText(locationName);
+		
+		if (locationId == 0) {
+			locationTextView.setText(getString(R.string.error_non_loc_tap));
+		} else {
+			locationTextView.setText(locationName);
+		}
 		locationTextView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -65,8 +69,8 @@ public class GroupCreationActivity extends ActionBarActivity {
 		Intent toLocationSelectionIntent = new Intent(this, LocationSelectionActivity.class);
 		toLocationSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_ID, locationId);
 		toLocationSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_NAME, locationName);
-		toLocationSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LON, locationLat);
-		toLocationSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LAT, locationLon);
+		toLocationSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LON, locationLon);
+		toLocationSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LAT, locationLat);
 		startActivityForResult(toLocationSelectionIntent, 0);
 	}
 	
@@ -75,7 +79,7 @@ public class GroupCreationActivity extends ActionBarActivity {
 		if (requestCode == 0 && resultCode == RESULT_OK) {
 			locationId = data.getIntExtra(FeedActivity.EXTRA_LOCATION_ID, 0);
 			locationName = data.getStringExtra(FeedActivity.EXTRA_LOCATION_NAME);
-			locationLat = data.getIntExtra(FeedActivity.EXTRA_LOCATION_LON, 0);
+			locationLat = data.getIntExtra(FeedActivity.EXTRA_LOCATION_LAT, 0);
 			locationLon = data.getIntExtra(FeedActivity.EXTRA_LOCATION_LON, 0);
 			locationTextView.setText(locationName);
 		}

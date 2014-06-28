@@ -27,7 +27,8 @@
         android:layout_alignTop="@+id/message_item_icon"
         android:layout_toLeftOf="@+id/message_item_icon"
         android:gravity="right"
-        android:padding="8dp" />
+        android:padding="8dp"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
     <ImageView
         android:id="@+id/message_item_icon"

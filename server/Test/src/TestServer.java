@@ -1138,9 +1138,10 @@ public class TestServer {
 		
 		boolean detailInserted = false;
 		try {
-			String sql = "insert into `user_detail` (`user_id`) values(?);";
+			String sql = "insert into `user_detail` (`user_id`, `icon_url`) values(?, ?);";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 			preparedStatement.setInt(1, userid);
+			preparedStatement.setString(2, getDefaultIconUrl(username.charAt(0)));
 			
 			preparedStatement.execute();
 			detailInserted = (preparedStatement.getUpdateCount() == 1);
@@ -1662,6 +1663,13 @@ public class TestServer {
 		resultSet.close();
 		preparedStatement.close();
 		return id;
+	}
+
+	private String getDefaultIconUrl(char firstLetter) {
+		if (!(firstLetter >= 'a' && firstLetter <= 'z')) {
+			firstLetter = 'a';
+		}
+		return "http://loc-chat-image-server.qiniudn.com/" + firstLetter + ".png";
 	}
 
 	public static void main(String[] args) {

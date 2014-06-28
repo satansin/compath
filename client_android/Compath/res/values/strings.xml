@@ -59,6 +59,8 @@
     <string name="error_name_too_long">名称不能超过30个字符</string>
     <string name="error_invalid_location">创建群组时必须选择一个具体的地点</string>
     <string name="error_non_storage">未找到存储卡位置</string>
+    <string name="error_non_feed">这里没有找到群组，创建一个吧~</string>
+    <string name="error_non_loc_tap">无法创建群组，点击选择地点</string>
     <string name="alert_cancel_title">确认取消</string>
     <string name="alert_cancel_message_create">是否取消创建？</string>
     <string name="alert_exit_title">确认退出</string>

@@ -24,16 +24,18 @@
             android:layout_height="70dp"
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
-            android:padding="20dp"
             android:contentDescription="@string/image_content_description"
+            android:padding="20dp"
             android:src="@drawable/nav_turn_via_1" />
 
         <ImageView
+            android:id="@+id/location_selection_arrow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:layout_marginRight="18dp"
+            android:layout_marginLeft="18dp"
             android:clickable="true"
             android:contentDescription="@string/image_content_description"
             android:src="@drawable/setting_arrow" />
@@ -43,8 +45,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:layout_toRightOf="@+id/location_selection_reminder" />
-
+            android:layout_toRightOf="@+id/location_selection_reminder"
+            android:layout_toLeftOf="@+id/location_selection_arrow"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
     </RelativeLayout>
 
 </RelativeLayout>

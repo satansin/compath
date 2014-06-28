@@ -3,18 +3,13 @@ package com.satansin.android.compath;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBarActivity;
 
@@ -31,36 +26,17 @@ import com.satansin.android.compath.qiniu.Conf;
 import com.satansin.android.compath.qiniu.JSONObjectRet;
 import com.satansin.android.compath.util.UITimeGenerator;
 
-import android.support.v7.app.ActionBarActivity;
-import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.net.Uri;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.satansin.android.compath.logic.ImageService;
-import com.satansin.android.compath.logic.LoginService;
-import com.satansin.android.compath.logic.MemoryService;
-import com.satansin.android.compath.logic.NetworkTimeoutException;
-import com.satansin.android.compath.logic.NotLoginException;
-import com.satansin.android.compath.logic.PersonalSettingsService;
-import com.satansin.android.compath.logic.ServiceFactory;
-import com.satansin.android.compath.logic.UnknownErrorException;
 
 public class PersonalSettingsActivity extends ActionBarActivity {
 
