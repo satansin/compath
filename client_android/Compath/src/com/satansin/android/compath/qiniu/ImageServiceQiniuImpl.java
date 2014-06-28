@@ -4,9 +4,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -32,15 +29,32 @@ public class ImageServiceQiniuImpl implements ImageService {
 			return MemoryService.IMG_ALBUM;
 		case ORIGIN:
 			return MemoryService.IMG_ORIGIN;
-		case THUMB_ICON:
+		case THUMB_ICON_DISCUSS:
+			return MemoryService.IMG_THUMB_L;
+		case THUMB_ICON_PERSONAL_SETTINGS:
 			return MemoryService.IMG_THUMB_L;
 		default:
 			return 0;
 		}
 	}
+	
+	private String getTargetImgSizeParams(int type) {
+		switch (type) {
+		case ALBUM:
+			return "";
+		case ORIGIN:
+			return "";
+		case THUMB_ICON_DISCUSS:
+			return "?imageView2/1/w/60/h/60";
+		case THUMB_ICON_PERSONAL_SETTINGS:
+			return "?imageView2/1/w/96/h/96";
+		default:
+			return "";
+		}
+	}
 
 	@Override
-	public Bitmap getBitmap(String url, int type) throws UnknownErrorException {
+	public Bitmap getBitmap(String url, int type) {
 		String[] urlSplit = url.split("/");
 		if (urlSplit.length <= 0) {
 			return null;
@@ -48,14 +62,17 @@ public class ImageServiceQiniuImpl implements ImageService {
 		String fileName = urlSplit[urlSplit.length - 1];
 		
 		MemoryService memoryService = ServiceFactory.getMemoryService(context);
-		Bitmap localBitmap = memoryService.getLocalImage(fileName, getFileQualityCode(type));
+		Bitmap localBitmap = null;
+		try {
+			localBitmap = memoryService.getLocalImage(fileName, getFileQualityCode(type));
+		} catch (UnknownErrorException e) {
+		}
 		if (localBitmap != null) {
 			return localBitmap;
 		}
 		
 		try {
-			// TODO 加入根据quality的缩放
-			URL httpUrl = new URL(url);
+			URL httpUrl = new URL(url + getTargetImgSizeParams(type));
 			HttpURLConnection connection = (HttpURLConnection) httpUrl.openConnection();
 			connection.setConnectTimeout(0);
 			connection.setDoInput(true);
@@ -76,38 +93,13 @@ public class ImageServiceQiniuImpl implements ImageService {
 		}
 	}
 	
-	private String uploadedUrl = "";
-	private Exception uploadException;
-
 	/**
 	 * @return 图片上传到服务器上的完整路径
 	 * @throws Exception 
 	 */
 	@Override
-	public String uploadBitmap(Context context, String uptoken, Uri uri) throws UnknownErrorException, NetworkTimeoutException {
-		IO.putFile(context, uptoken, IO.UNDEFINED_KEY, uri, new PutExtra(), new JSONObjectRet() {
-			@Override
-			public void onFailure(Exception ex) {
-				uploadException = new NetworkTimeoutException();
-			}
-			@Override
-			public void onSuccess(JSONObject obj) {
-				try {
-					uploadedUrl = Conf.SERVER_DOMAIN + obj.getString("hash");
-				} catch (JSONException e) {
-					uploadException = new UnknownErrorException();
-				}
-			}
-		});
-		if (uploadException != null) {
-			if (uploadException instanceof NetworkTimeoutException) {
-				throw (NetworkTimeoutException) uploadException;
-			}
-			if (uploadException instanceof UnknownErrorException) {
-				throw (UnknownErrorException) uploadException;
-			}
-		}
-		return uploadedUrl;
+	public void uploadBitmap(Context context, String uptoken, Uri uri, JSONObjectRet ret) throws UnknownErrorException, NetworkTimeoutException {
+		IO.putFile(context, uptoken, IO.UNDEFINED_KEY, uri, new PutExtra(), ret);
 	}
 
 }

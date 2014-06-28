@@ -90,7 +90,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="37dp"
         android:contentDescription="@string/image_content_description"
-        android:src="@drawable/test_icon" />
+		android:background="#eee" />
 
     <TextView
         android:id="@+id/personal_settings_usrname"
@@ -98,8 +98,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/personal_settings_icon"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="23dp"
-        android:text="Oracle" />
+        android:layout_marginTop="23dp" />
 
     <TextView
         android:id="@+id/personal_settings_city"
@@ -107,7 +106,6 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/personal_settings_usrname"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="14dp"
-        android:text="Nanjing" />
+        android:layout_marginTop="14dp" />
 
 </RelativeLayout>

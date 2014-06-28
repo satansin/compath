@@ -180,6 +180,7 @@ public class FileHelper {
 	private InputStream getSDFileInputStream(File rootDir, String fileName) throws IOException {
 		File file = new File(rootDir, fileName);
 		if (!file.exists()) {
+			Log.w("file_loc", file.getPath());
 			return null;
 		}
 		return new FileInputStream(file);
@@ -321,7 +322,7 @@ public class FileHelper {
 	public Uri putLocalImage(String fileName, Bitmap bitmap, int quality) throws IOException {
 		File imgFile = getImageFile(fileName, quality);
 		if (!imgFile.exists()) {
-			throw new IOException();
+			imgFile.createNewFile();
 		}
 		BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(imgFile));
 		bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream); // TODO format and quality selection
@@ -337,13 +338,19 @@ public class FileHelper {
 
 	private ObjectInputStream inputStream;
 	private ObjectOutputStream outputStream;
-	public void openSerialFile(int objectType) throws IOException {
+	public void openInputSerialFile(int objectType) throws IOException {
 		inputStream = new ObjectInputStream(getFileInputStream(objectType));
+	}
+	
+	public void openOutputSerialFile(int objectType) throws IOException {
 		outputStream = new ObjectOutputStream(getFileOutputStream(objectType));
 	}
 	
-	public void openUsrSerialFile(int objectType, String usrname) throws IOException {
+	public void openUsrInputSerialFile(int objectType, String usrname) throws IOException {
 		inputStream = new ObjectInputStream(getUsrFileInputStream(objectType, usrname));
+	}
+	
+	public void openUsrOutputSerialFile(int objectType, String usrname) throws IOException {
 		outputStream = new ObjectOutputStream(getUsrFileOutputStream(objectType, usrname));
 	}
 

@@ -9,6 +9,7 @@ import com.satansin.android.compath.util.PasswordEncryptor;
 public class LoginServiceSocketImpl implements LoginService {
 	
 	private boolean firstLogin = false;
+	private String iconUrl = "";
 	
 	public String authenticate1(String usrname, String password) {
 		return "iIDnfs766dsD";
@@ -44,6 +45,7 @@ public class LoginServiceSocketImpl implements LoginService {
 			}
 			
 			session = result.getStringMsgContent(SocketMsg.PARAM_SESSION);
+			iconUrl = result.getStringMsgContent(SocketMsg.PARAM_URL);
 			firstLogin = result.getBoolMsgContent(SocketMsg.PARAM_FIRST_LOGIN);
 		} else {
 			throw new UnknownErrorException();
@@ -55,6 +57,11 @@ public class LoginServiceSocketImpl implements LoginService {
 	@Override
 	public boolean isFirstLogin() {
 		return firstLogin;
+	}
+	
+	@Override
+	public String getIconUrl() {
+		return iconUrl;
 	}
 
 	@Override

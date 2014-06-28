@@ -43,7 +43,7 @@ public class MygroupsActivity extends ActionBarActivity {
 		ListView listView = (ListView) findViewById(R.id.mygroups_list_view);
 		mygroupList = new ArrayList<HashMap<String, Object>>();
 		mygroupAdapter = new SimpleAdapter(this, mygroupList,
-				R.layout.group_item_favorite_groups,
+				R.layout.group_item_favorite_groups1,
 				new String[] { UI_GROUP_ITEM_USRNAME, UI_GROUP_ITEM_LOCATION,
 						UI_GROUP_ITEM_TITLE }, new int[] {
 						R.id.mygroups_item_usrname, R.id.mygroups_item_location,

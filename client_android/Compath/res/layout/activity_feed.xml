@@ -1,8 +1,33 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.satansin.android.compath.FeedActivity"
-    tools:ignore="MergeRootFrame" />
+    tools:context="com.satansin.android.compath.FeedActivity" >
 
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipe"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <ListView
+            android:id="@+id/feed_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:divider="#fff"
+            android:dividerHeight="1dp"
+            android:footerDividersEnabled="true"
+            android:headerDividersEnabled="true" >
+        </ListView>
+    </android.support.v4.widget.SwipeRefreshLayout>
+
+    <!--
+    <com.satansin.android.compath.RefreshableListView
+        android:id="@+id/feed_list_view"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:divider="#fff"
+        android:dividerHeight="1dp"
+        android:footerDividersEnabled="true"
+        android:headerDividersEnabled="true" />    -->
+
+</RelativeLayout>

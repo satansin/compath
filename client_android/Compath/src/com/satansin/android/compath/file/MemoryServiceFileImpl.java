@@ -7,6 +7,7 @@ import java.util.List;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.util.Log;
 
 import com.satansin.android.compath.file.FileHelper.Session;
 import com.satansin.android.compath.logic.City;
@@ -29,7 +30,7 @@ public class MemoryServiceFileImpl implements MemoryService {
 		
 		try {
 			FileHelper helper = new FileHelper(context);
-			helper.openSerialFile(FileHelper.OBJECT_SESSION);
+			helper.openInputSerialFile(FileHelper.OBJECT_SESSION);
 			currentSession = (Session) helper.getObjectFromSerialFile();
 			helper.closeSerialFile();
 		} catch (Exception e) {
@@ -67,8 +68,8 @@ public class MemoryServiceFileImpl implements MemoryService {
 	}
 
 	@Override
-	public boolean writeSession(String usrname, String session) throws UnknownErrorException {
-		currentSession = new Session(usrname, session, "");
+	public boolean writeSession(String usrname, String session, String iconUrl) throws UnknownErrorException {
+		currentSession = new Session(usrname, session, iconUrl);
 		boolean sessionWritten = writeSessionToFile();
 		if (!sessionWritten) {
 			currentSession = null;
@@ -80,7 +81,7 @@ public class MemoryServiceFileImpl implements MemoryService {
 		boolean sessionWritten = false;
 		try {
 			FileHelper helper = new FileHelper(context);
-			helper.openSerialFile(FileHelper.OBJECT_SESSION);
+			helper.openOutputSerialFile(FileHelper.OBJECT_SESSION);
 			sessionWritten = helper.writeObjectToSerialFile(currentSession);
 			helper.closeSerialFile();
 		} catch (Exception e) {
@@ -108,8 +109,10 @@ public class MemoryServiceFileImpl implements MemoryService {
 		
 		try {
 			FileHelper helper = new FileHelper(context);
-			helper.openUsrSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
+			helper.openUsrInputSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
 			int count = helper.getIntFromSerialFile();
+			Log.w("read_count", String.valueOf(count)); // TODO
+
 			int selectedIndex = 0;
 			for (int i = 0; i < count; i++) {
 				Message message = (Message) helper.getObjectFromSerialFile();
@@ -134,7 +137,7 @@ public class MemoryServiceFileImpl implements MemoryService {
 	private void updateHistoryMessages(Message newMessage, String usrname) throws UnknownErrorException {
 		try {
 			FileHelper helper = new FileHelper(context);
-			helper.openUsrSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
+			helper.openUsrInputSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
 			int count = helper.getIntFromSerialFile();
 			ArrayList<Message> historyMsgList = new ArrayList<Message>();
 			historyMsgList.add(newMessage);
@@ -144,7 +147,7 @@ public class MemoryServiceFileImpl implements MemoryService {
 			}
 			helper.closeSerialFile();
 			
-			helper.openUsrSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
+			helper.openUsrOutputSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
 			int newSize = historyMsgList.size();
 			helper.writeObjectToSerialFile(newSize);
 			for (int i = 0; i < historyMsgList.size(); i++) {
@@ -158,20 +161,22 @@ public class MemoryServiceFileImpl implements MemoryService {
 	}
 	
 	@Override
-	public Message insertSendingMessage(String text, int groupId, boolean isComingMsg) throws UnknownErrorException {
-		Message newMessage = new Message(0, text, Calendar.getInstance().getTimeInMillis(), isComingMsg, getMyUsrname(), groupId, currentSession.iconUrl);
+	public Message insertSendingMessage(String text, int groupId) throws UnknownErrorException {
 		String usrname = getMyUsrname();
 		if (usrname.length() <= 0) {
 			return null;
 		}
+		
+		Message newMessage = new Message(0, text, Calendar.getInstance().getTimeInMillis(), false, getMyUsrname(), groupId, currentSession.iconUrl);
 		
 		updateHistoryMessages(newMessage, usrname);
 		return newMessage;
 	}
 
 	@Override
-	public Message insertReceivedMessage(Message message, boolean isComingMsg) throws UnknownErrorException {
-		message.setComingMsg(isComingMsg);
+	public Message insertReceivedMessage(Message message, int groupId) throws UnknownErrorException {
+		message.setComingMsg(true);
+		message.setGroupId(groupId);
 		String usrname = getMyUsrname();
 		if (usrname.length() <= 0) {
 			return null;

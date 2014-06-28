@@ -11,7 +11,6 @@ import com.baidu.mapapi.BMapManager;
 import com.baidu.mapapi.map.LocationData;
 import com.satansin.android.compath.logic.FeedService;
 import com.satansin.android.compath.logic.Group;
-import com.satansin.android.compath.logic.ImageService;
 import com.satansin.android.compath.logic.Location;
 import com.satansin.android.compath.logic.LocationService;
 import com.satansin.android.compath.logic.MemoryService;
@@ -22,14 +21,14 @@ import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
 import com.satansin.android.compath.util.UITimeGenerator;
 
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v4.app.Fragment;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,27 +40,59 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class FeedActivity extends ActionBarActivity {
 
+	/**
+	 * Extra: id of the selected location.
+	 */
 	public static final String EXTRA_LOCATION_ID = "com.satansin.android.compath.EXTRA_FEED_LOCATION_ID";
+	/**
+	 * Extra: name of the selected location.
+	 */
 	public static final String EXTRA_LOCATION_NAME = "com.satansin.android.compath.EXTRA_FEED_LOCATION_NAME";
+	/**
+	 * Extra: latitude of the selected location.
+	 */
 	public static final String EXTRA_LOCATION_LAT = "com.satansin.android.compath.EXTRA_FEED_LOCATION_LAT";
+	/**
+	 * Extra: longitude of the selected location.
+	 */
 	public static final String EXTRA_LOCATION_LON = "com.satansin.android.compath.EXTRA_FEED_LOCATION_LON";
 	
+	/**
+	 * Request code for group creation.
+	 */
 	private static final int REQUEST_CODE_GROUP_CREATION = 0;
+	/**
+	 * Request code for location selection.
+	 */
 	private static final int REQUEST_CODE_LOCATION_SELECTION = 1;
+	/**
+	 * Request code for personal settings.
+	 */
 	private static final int REQUEST_CODE_PERSONAL_SETTINGS = 2;
+	/**
+	 * Request code for location creation.
+	 */
 	private static final int REQUEST_CODE_LOCATION_CREATION = 3;
 
-	private static Location location = new Location();
+	/**
+	 * Current location the user are at.<br>
+	 * Id 0 shows that the there's no location info now, usually the location includes a city's info.
+	 */
+	private Location mLocation = new Location();
 
-	private static List<FeedItem> feedList;
-	private static FeedItemAdapter feedAdapter;
+//	private List<FeedItem> feedList;
+	private List<Group> mFeedList;
+	private FeedItemAdapter mFeedAdapter;
+	private ListView mListView;
+	private SwipeRefreshLayout mSwipeRefreshLayout;
+	
+	private GetFeedTask mGetFeedTask;
 	
 	// 定位相关
 	private LocationClient mLocClient;
@@ -71,7 +102,9 @@ public class FeedActivity extends ActionBarActivity {
 	private static final int MAX_LOCATING_TIMEOUT = 8000;
 	
 	/**
-	 * 定位SDK监听函数
+	 * Location listener.<br>
+	 * You should call the startTiming method to start a timing, the location operation will stop after MAX_LOCATING_TIMEOUT.
+	 * When a location is received, update the locData, set isFirstLoc true, and stop the mLocClient.<br>
 	 */
 	public class MyLocationListenner implements BDLocationListener {
 
@@ -122,17 +155,44 @@ public class FeedActivity extends ActionBarActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		
+		// add this activity to application activity list
 		CompathApplication.getInstance().addActivity(this);
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_feed);
 
-		feedList = new ArrayList<FeedItem>();
-		feedAdapter = new FeedItemAdapter(this);
+		// initiate the list and adapter
+//		feedList = new ArrayList<FeedItem>();
+		mFeedList = new ArrayList<Group>();
+		mFeedAdapter = new FeedItemAdapter(this);
 
-		if (savedInstanceState == null) {
-			getSupportFragmentManager().beginTransaction()
-					.add(R.id.container, new PlaceholderFragment()).commit();
-		}
+		mListView = (ListView) findViewById(R.id.feed_list_view);
+		mListView.setAdapter(mFeedAdapter);
+		mListView.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+//				Group selectedGroup = ((FeedItem)parent.getItemAtPosition(position)).group;
+				Group selectedGroup = (Group) parent.getItemAtPosition(position);
+				int selectedGroupId = selectedGroup.getId();
+		
+				Intent toDiscussIntent = new Intent(FeedActivity.this, DiscussActivity.class);
+				toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, selectedGroupId);
+				startActivity(toDiscussIntent);
+			}
+		});
+		
+		mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe);
+		// 顶部刷新的样式 
+		mSwipeRefreshLayout.setColorScheme(R.color.holo_red_light, R.color.holo_green_light,  
+                R.color.holo_blue_bright, R.color.holo_orange_light);
+		mSwipeRefreshLayout.setOnRefreshListener(new OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				executeRefresh(false, false);
+			}
+		});
 		
 		/**
          * 使用地图sdk前需先初始化BMapManager.
@@ -158,7 +218,7 @@ public class FeedActivity extends ActionBarActivity {
 		option.setScanSpan(1000);
 		mLocClient.setLocOption(option);
 		
-		new GetFeedTask().execute(true);
+		executeRefresh(true, true);
 	}
 
 	@Override
@@ -187,7 +247,7 @@ public class FeedActivity extends ActionBarActivity {
 			startLocationCreation();
 			return true;
 		} else if (id == R.id.action_refresh) {
-			new GetFeedTask().execute(true);
+			executeRefresh(true, true);
 			return true;
 		} else if (id == R.id.action_exit) {
 			exitApp();
@@ -195,6 +255,14 @@ public class FeedActivity extends ActionBarActivity {
 		}
 		return super.onOptionsItemSelected(item);
 	}
+	
+//	@Override
+//	public boolean onKeyDown(int keyCode, KeyEvent event) {
+//		if (keyCode == KeyEvent.KEYCODE_BACK) {
+//			exitApp();
+//		}
+//		return true;
+//	}
 	
 	private void startPersonalSettings() {
 		Intent toPersonalSettingsIntent = new Intent(this, PersonalSettingsActivity.class);
@@ -222,12 +290,13 @@ public class FeedActivity extends ActionBarActivity {
 	}
 	
 	private void exitApp() {
-		AlertDialog exitAlertDialog = new AlertDialog.Builder(this).create();
-		exitAlertDialog.setTitle(getString(R.string.alert_exit_title));
-		exitAlertDialog.setMessage(getString(R.string.alert_exit_message));
-		exitAlertDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.alert_positive), exitDialogListener);
-		exitAlertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.alert_negative), exitDialogListener);
-		exitAlertDialog.show();
+//		AlertDialog exitAlertDialog = new AlertDialog.Builder(this).create();
+//		exitAlertDialog.setTitle(getString(R.string.alert_exit_title));
+//		exitAlertDialog.setMessage(getString(R.string.alert_exit_message));
+//		exitAlertDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.alert_positive), exitDialogListener);
+//		exitAlertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.alert_negative), exitDialogListener);
+//		exitAlertDialog.show();
+		System.exit(0);
 	}
 	
 	@Override
@@ -246,8 +315,8 @@ public class FeedActivity extends ActionBarActivity {
 				break;
 			case 1:
 				Intent toMapSelectionIntent = new Intent(FeedActivity.this, MapSelectionActivity.class);
-				toMapSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LAT, location.getLatitude());
-				toMapSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LON, location.getLongitude());
+				toMapSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LAT, mLocation.getLatitude());
+				toMapSelectionIntent.putExtra(FeedActivity.EXTRA_LOCATION_LON, mLocation.getLongitude());
 				startActivityForResult(toMapSelectionIntent, REQUEST_CODE_LOCATION_CREATION);
 				break;
 			default:
@@ -256,20 +325,20 @@ public class FeedActivity extends ActionBarActivity {
 		}
 	};
 	
-	private DialogInterface.OnClickListener exitDialogListener = new DialogInterface.OnClickListener() {
-		@Override
-		public void onClick(DialogInterface dialog, int which) {
-			if (which == DialogInterface.BUTTON_POSITIVE) {
-				System.exit(0);
-			}
-		}
-	};
+//	private DialogInterface.OnClickListener exitDialogListener = new DialogInterface.OnClickListener() {
+//		@Override
+//		public void onClick(DialogInterface dialog, int which) {
+//			if (which == DialogInterface.BUTTON_POSITIVE) {
+//				System.exit(0);
+//			}
+//		}
+//	};
 	
 	private Intent putLocationExtras(Intent intent) {
-		intent.putExtra(EXTRA_LOCATION_ID, location.getId());
-		intent.putExtra(EXTRA_LOCATION_NAME, location.getName());
-		intent.putExtra(EXTRA_LOCATION_LON, location.getLongitude());
-		intent.putExtra(EXTRA_LOCATION_LAT, location.getLatitude());
+		intent.putExtra(EXTRA_LOCATION_ID, mLocation.getId());
+		intent.putExtra(EXTRA_LOCATION_NAME, mLocation.getName());
+		intent.putExtra(EXTRA_LOCATION_LON, mLocation.getLongitude());
+		intent.putExtra(EXTRA_LOCATION_LAT, mLocation.getLatitude());
 		return intent;
 	}
 	
@@ -278,11 +347,10 @@ public class FeedActivity extends ActionBarActivity {
 		String locationName = data.getStringExtra(EXTRA_LOCATION_NAME);
 		int locationLat = data.getIntExtra(EXTRA_LOCATION_LAT, 0);
 		int locationLon = data.getIntExtra(EXTRA_LOCATION_LON, 0);
-		location = new Location(locationId, locationName, locationLat, locationLon);
+		mLocation = new Location(locationId, locationName, locationLat, locationLon);
 		setTitle(locationName);
 
-		GetFeedTask getFeedTask = new GetFeedTask();
-		getFeedTask.execute(false);
+		executeRefresh(true, false);
 	}
 	
 	@Override
@@ -302,40 +370,6 @@ public class FeedActivity extends ActionBarActivity {
 			}
 		} else if (requestCode == REQUEST_CODE_LOCATION_CREATION && resultCode == RESULT_OK) {
 			refreshWithLocationFromIntent(data);
-		}
-	}
-
-	/**
-	 * A placeholder fragment containing a simple view.
-	 */
-	public static class PlaceholderFragment extends Fragment {
-
-		public PlaceholderFragment() {
-		}
-
-		@Override
-		public View onCreateView(LayoutInflater inflater, ViewGroup container,
-				Bundle savedInstanceState) {
-			View rootView = inflater.inflate(R.layout.fragment_feed, container,
-					false);
-
-			ListView listView = (ListView) rootView
-					.findViewById(R.id.feed_list_view);
-			listView.setAdapter(feedAdapter);
-			listView.setOnItemClickListener(new OnItemClickListener() {
-				@Override
-				public void onItemClick(AdapterView<?> parent, View view,
-						int position, long id) {
-					Group selectedGroup = ((FeedItem)parent.getItemAtPosition(position)).group;
-					int selectedGroupId = selectedGroup.getId();
-					
-					Intent toDiscussIntent = new Intent(getActivity(), DiscussActivity.class);
-					toDiscussIntent.putExtra(DiscussActivity.EXTRA_DISCUSS_GROUP_ID, selectedGroupId);
-					startActivity(toDiscussIntent);
-				}
-			});
-			
-			return rootView;
 		}
 	}
 	
@@ -361,17 +395,17 @@ public class FeedActivity extends ActionBarActivity {
 					if (isFirstLoc) {
 						LocationService locationService = ServiceFactory.getLocationService();
 						try {
-							location = locationService.getLocationByPoint((int) (locData.latitude * 1e6), (int) (locData.longitude * 1e6));
+							mLocation = locationService.getLocationByPoint((int) (locData.latitude * 1e6), (int) (locData.longitude * 1e6));
 						} catch (NonLocationException e) {
 						}
 					}
 				}
-				if (location.getId() <= 0) {
+				if (mLocation.getId() <= 0) {
 					MemoryService memoryService = ServiceFactory.getMemoryService(getApplicationContext());
 					groups = (ArrayList<Group>) feedService.getFeedByMycity(memoryService.getMySession());
-					location = feedService.getUpdatedLocation();
+					mLocation = feedService.getUpdatedLocation();
 				} else {
-					groups = (ArrayList<Group>) feedService.getFeedByLocationId(location.getId());
+					groups = (ArrayList<Group>) feedService.getFeedByLocationId(mLocation.getId());
 				}
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
@@ -385,6 +419,9 @@ public class FeedActivity extends ActionBarActivity {
 		
 		@Override
 		protected void onPostExecute(List<Group> result) {
+			mSwipeRefreshLayout.setRefreshing(false);
+			mGetFeedTask = null;
+			
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
 					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
@@ -404,38 +441,50 @@ public class FeedActivity extends ActionBarActivity {
 			}
 			
 			// TODO setTitle╮(╯▽╰)╭
-			FeedActivity.this.setTitle(location.getName());
+			FeedActivity.this.setTitle(mLocation.getName());
 			
 			if (result.size() == 0) {
 				return;
 			}
-			feedList.clear();
+			mFeedList.clear();
 			for (int i = 0; i < result.size(); i++) {
 				Group group = result.get(i);
-				feedList.add(new FeedItem(group, null));
+//				feedList.add(new FeedItem(group, null));
+				mFeedList.add(group);
 				
-				new GetUsrIconTask(i, group.getIconUrl()).execute();
+//				new GetUsrIconTask(i, group.getIconUrl()).execute();
 			}
-			feedAdapter.notifyDataSetChanged();
+			mFeedAdapter.notifyDataSetChanged();
 		}
 		
 	}
 	
-	private class FeedItem {
-		Group group;
-		Bitmap bitmap;
-		public FeedItem(Group group, Bitmap bitmap) {
-			this.group = group;
-			this.bitmap = bitmap;
+	private void executeRefresh(boolean manuallyShowHeader, boolean relocation) {
+		if (mGetFeedTask != null) {
+			return;
 		}
+		if (manuallyShowHeader) {
+			mSwipeRefreshLayout.setRefreshing(true);
+		}
+		mGetFeedTask = new GetFeedTask();
+		mGetFeedTask.execute(relocation);
 	}
+	
+//	private class FeedItem {
+//		Group group;
+//		Bitmap bitmap;
+//		public FeedItem(Group group, Bitmap bitmap) {
+//			this.group = group;
+//			this.bitmap = bitmap;
+//		}
+//	}
 	
 	private class FeedItemAdapter extends BaseAdapter {
 		private Context context;
 		private ViewHolder viewHolder = new ViewHolder();
 		
 		class ViewHolder {
-			public ImageView iconImageView;
+//			public ImageView iconImageView;
 			public TextView timeTextView;
 			public TextView usrnameTextView;
 			public TextView titleTextView;
@@ -448,12 +497,12 @@ public class FeedActivity extends ActionBarActivity {
 
 		@Override
 		public int getCount() {
-			return feedList.size();
+			return mFeedList.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
-			return feedList.get(position);
+			return mFeedList.get(position);
 		}
 
 		@Override
@@ -463,15 +512,16 @@ public class FeedActivity extends ActionBarActivity {
 
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-			FeedItem item = (FeedItem) getItem(position);
-			Group group = item.group;
-			Bitmap bitmap = item.bitmap;
+//			FeedItem item = (FeedItem) getItem(position);
+//			Group group = item.group;
+//			Bitmap bitmap = item.bitmap;
+			Group group = (Group) getItem(position);
 			
 			convertView = LayoutInflater.from(context).inflate(R.layout.group_item_feed, null);
 			viewHolder.timeTextView = (TextView) convertView
 					.findViewById(R.id.feed_item_time);
-			viewHolder.iconImageView = (ImageView) convertView
-					.findViewById(R.id.feed_item_icon);
+//			viewHolder.iconImageView = (ImageView) convertView
+//					.findViewById(R.id.feed_item_icon);
 			viewHolder.usrnameTextView = (TextView) convertView
 					.findViewById(R.id.feed_item_usrname);
 			viewHolder.titleTextView = (TextView) convertView
@@ -485,38 +535,34 @@ public class FeedActivity extends ActionBarActivity {
 			viewHolder.usrnameTextView.setText(group.getOwnerName());
 			viewHolder.titleTextView.setText(group.getTitle());
 			viewHolder.numberTextView.setText(String.valueOf(group.getNumberOfMembers()));
-			if (bitmap != null) {
-				viewHolder.iconImageView.setImageBitmap(bitmap);
-			}
+//			if (bitmap != null) {
+//				viewHolder.iconImageView.setImageBitmap(bitmap);
+//			}
 			
 			return convertView;
 		}
 	}
 	
-	private class GetUsrIconTask extends AsyncTask<Void, Void, Bitmap> {
-		private int position;
-		private String url;
-		public GetUsrIconTask(int position, String url) {
-			this.position = position;
-			this.url = url;
-		}
-		@Override
-		protected Bitmap doInBackground(Void... params) {
-			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-			try {
-				return imageService.getBitmap(url, ImageService.THUMB_ICON);
-			} catch (UnknownErrorException e) {
-				return null;
-			}
-		}
-		@Override
-		protected void onPostExecute(Bitmap result) {
-			if (result == null) {
-				return;
-			}
-			feedList.get(position).bitmap = result;
-			feedAdapter.notifyDataSetChanged();
-		}
-	}
+//	private class GetUsrIconTask extends AsyncTask<Void, Void, Bitmap> {
+//		private int position;
+//		private String url;
+//		public GetUsrIconTask(int position, String url) {
+//			this.position = position;
+//			this.url = url;
+//		}
+//		@Override
+//		protected Bitmap doInBackground(Void... params) {
+//			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
+//			return imageService.getBitmap(url, ImageService.THUMB_ICON);
+//		}
+//		@Override
+//		protected void onPostExecute(Bitmap result) {
+//			if (result == null) {
+//				return;
+//			}
+//			feedList.get(position).bitmap = result;
+//			feedAdapter.notifyDataSetChanged();
+//		}
+//	}
 
 }

@@ -1,5 +1,9 @@
 package com.satansin.android.compath;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import com.baidu.mapapi.BMapManager;
 import com.baidu.mapapi.map.ItemizedOverlay;
 import com.baidu.mapapi.map.MKMapTouchListener;
@@ -46,9 +50,13 @@ public class LocationSelectionActivity extends ActionBarActivity {
 	 */
 	private ItemizedOverlay<OverlayItem> mOverlay = null;
 	
+	private TextView locationNameTextView;
+	
 	private GetLocationTask getLocationTask;
 	
 	private Location currentLocation = null;
+	
+	private HashMap<OverlayItem ,Location> locItemMap = new HashMap<OverlayItem ,Location>();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -87,12 +95,19 @@ public class LocationSelectionActivity extends ActionBarActivity {
         mapTouchListener = new MKMapTouchListener(){
 			@Override
 			public void onMapClick(GeoPoint point) {
+				if (getLocationTask != null) {
+					return;
+				}
 				int lat = point.getLatitudeE6();
 				int lon = point.getLongitudeE6();
 				Log.w("lat_clicked", String.valueOf(lat));
 				Log.w("lon_clicked", String.valueOf(lon));
 				getLocationTask = new GetLocationTask();
 				getLocationTask.execute(lat, lon);
+				
+				if (locationNameTextView != null) {
+					locationNameTextView.setText(getString(R.string.location_selection_loading));
+				}
 			}
 
 			@Override
@@ -132,15 +147,34 @@ public class LocationSelectionActivity extends ActionBarActivity {
         			}
         		});
         
-        ((TextView) findViewById(R.id.location_selection_text)).setText(currentLocation.getName());
-        
-        mOverlay = new ItemizedOverlay<OverlayItem>(getResources().getDrawable(R.drawable.icon_gcoding), mMapView);
+        mOverlay = new ItemizedOverlay<OverlayItem>(getResources().getDrawable(R.drawable.icon_gcoding), mMapView) {
+        	@Override
+    		public boolean onTap(int index){
+    			OverlayItem item = getItem(index);
+    			currentLocation = locItemMap.get(item);
+    			locationNameTextView = (TextView) findViewById(R.id.location_selection_text);
+    			locationNameTextView.setText(currentLocation.getName());
+    			
+    			return true;
+    		}
+        };
         mMapView.getOverlays().add(mOverlay);
+        
+        locationNameTextView = (TextView) findViewById(R.id.location_selection_text);
+        if (currentLocation.getId() == 0) {
+			locationNameTextView.setText(getString(R.string.location_selection_error_non_loc_tap));
+		} else {
+			locationNameTextView.setText(currentLocation.getName());
+			
+			GeoPoint point = new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude());
+			OverlayItem item = new OverlayItem(point, "", "");
+			mOverlay.addItem(item);
+			mMapView.refresh();
+		}
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.location_selection, menu);
 		return true;
@@ -163,29 +197,41 @@ public class LocationSelectionActivity extends ActionBarActivity {
 		CompathApplication.getInstance().removeActivity(this);
 		super.onDestroy();
 	}
-	
-	public void updateMapState(int lat, int lon, String locationName) {
-		mMapController.setCenter(new GeoPoint(lat, lon));
-		// 在地图上标注marker
+
+	private void updateMapState(List<Location> result) {
+		locItemMap.clear();
 		mOverlay.removeAll();
-		GeoPoint point = new GeoPoint(lat, lon);
-		OverlayItem item = new OverlayItem(point, "", "");
-		mOverlay.addItem(item);
+		for (Location location : result) {
+			OverlayItem item = new OverlayItem(new GeoPoint(location.getLatitude(), location.getLongitude()), "", "");
+			locItemMap.put(item, location);
+			mOverlay.addItem(item);
+		}
 		mMapView.refresh();
 		
-		TextView locationNameTextView = (TextView) findViewById(R.id.location_selection_text);
-		locationNameTextView.setText(locationName);
+		locationNameTextView.setText(getString(R.string.location_selection_tap_pops));
 	}
 	
-	private class GetLocationTask extends AsyncTask<Integer, Void, Location> {
+//	public void updateMapState(int lat, int lon, String locationName) {
+////		mMapController.setCenter(new GeoPoint(lat, lon));
+//		// 在地图上标注marker
+//		mOverlay.removeAll();
+//		GeoPoint point = new GeoPoint(lat, lon);
+//		OverlayItem item = new OverlayItem(point, "", "");
+//		mOverlay.addItem(item);
+//		mMapView.refresh();
+//		
+//		TextView locationNameTextView = (TextView) findViewById(R.id.location_selection_text);
+//		locationNameTextView.setText(locationName);
+//	}
+	
+	private class GetLocationTask extends AsyncTask<Integer, Void, List<Location>> {
 		private Exception exception;
 		private LocationService locationService;
 		@Override
-		protected Location doInBackground(Integer... params) {
+		protected List<Location> doInBackground(Integer... params) {
 			locationService = ServiceFactory.getLocationService();
-			Location location = new Location();
 			try {
-				location = locationService.getLocationByPoint(params[0], params[1]);
+				return locationService.getLocationsByPoint(params[0], params[1]);
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
@@ -193,11 +239,13 @@ public class LocationSelectionActivity extends ActionBarActivity {
 			} catch (NonLocationException e) {
 				exception = (NonLocationException) e;
 			}
-			return location;
+			return new ArrayList<Location>();
 		}
 		
 		@Override
-		protected void onPostExecute(Location result) {
+		protected void onPostExecute(List<Location> result) {
+			getLocationTask = null;
+			
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
 					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
@@ -206,12 +254,18 @@ public class LocationSelectionActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NonLocationException) {
+					locationNameTextView.setText(getString(R.string.location_selection_error_non_loc_tap));
 					return;
 				}
 			}
 			
-			updateMapState(result.getLatitude(), result.getLongitude(), result.getName());
-			currentLocation = result;
+			if (result.size() <= 0) {
+				locationNameTextView.setText(getString(R.string.location_selection_error_non_loc_tap));
+				return;
+			}
+			updateMapState(result);
+//			updateMapState(result.getLatitude(), result.getLongitude(), result.getName());
+//			currentLocation = result;
 		}
 		
 	}

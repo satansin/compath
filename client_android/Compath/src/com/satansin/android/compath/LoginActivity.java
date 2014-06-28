@@ -255,7 +255,7 @@ public class LoginActivity extends ActionBarActivity {
 					MemoryService memoryService = ServiceFactory.getMemoryService(getApplicationContext());
 					memoryService.clearSession();
 					boolean sessionWritten = memoryService.writeSession(mUsrname,
-							session);
+							session, loginService.getIconUrl());
 					if (!sessionWritten) {
 						Toast.makeText(getApplicationContext(),
 								R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();

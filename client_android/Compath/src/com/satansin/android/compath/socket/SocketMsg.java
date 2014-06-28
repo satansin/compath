@@ -142,10 +142,16 @@ public class SocketMsg {
 	 */
 	public static final int ASK_FOR_IMAGE_UPDATE = 121;
 	/**
-	 * {"opcode":"121",
+	 * {"opcode":"122",
 	 * 	"session":"4"}
 	 */
 	public static final int ASK_FOR_MYICON_URL = 122;
+	/**
+	 * {"opcode":"123",
+	 * 	"latitude":"32847263",
+	 * 	"longitude":"118273643"}
+	 */
+	public static final int ASK_FOR_LOCATIONS = 123;
 	
 	// return type codes
 	/**
@@ -324,6 +330,17 @@ public class SocketMsg {
 	 * 	"error":"300/303"}
 	 */
 	public static final int RE_MYICON_URL = 222;
+	/**
+	 * {"type":"203",
+	 * 	"locations":[
+	 * 		{"id":"3523",
+	 * 		 "name":"Street No 8",
+	 * 		 "latitude(纬度)":"38273823",
+	 * 		 "longitude(经度)":"116838200"},
+	 * 		...(没有location数组长度0)],
+	 * 	"error":"300/302"}
+	 */
+	public static final int RE_LOCATIONS = 223;
 	
 	public static final int ERROR_UNKNOWN = 300;
 	public static final int ERROR_USRNAME_PASSWD_NOT_MATCHED = 301;
@@ -341,6 +358,7 @@ public class SocketMsg {
 	public static final String PARAM_TOKEN = "tk";
 	public static final String PARAM_ACTION = "a";
 	public static final String PARAM_URL = "ur";
+	public static final String PARAM_LOCATIONS = "ls";
 	
 	public static final String PARAM_SENT = "sn";
 	public static final String PARAM_FAVORED = "f";

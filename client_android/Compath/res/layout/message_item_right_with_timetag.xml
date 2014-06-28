@@ -9,13 +9,14 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:padding="4dp" />
+        android:padding="4dp"
+        android:textColor="@color/title_weak" />
     
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="1px"
         android:layout_alignTop="@+id/message_item_icon"
-        android:background="#bbb" >
+        android:background="@color/divider_weak" >
     </LinearLayout>
 
     <TextView
@@ -34,6 +35,13 @@
         android:layout_height="60dp"
         android:layout_alignParentRight="true"
         android:layout_below="@+id/message_item_time"
-        android:src="@drawable/abc_ab_bottom_solid_dark_holo" />
+		android:background="#eee" />
+    
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="1px"
+        android:layout_alignParentBottom="true"
+        android:background="@color/divider_weak" >
+    </LinearLayout>
 
 </RelativeLayout>

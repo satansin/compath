@@ -20,7 +20,7 @@
     
     <style name="WelcomeTheme" parent="@android:style/Theme.Light.NoTitleBar.Fullscreen"></style>
     
-    <style name="ImageViewTheme" parent="@android:style/Theme.Black.NoTitleBar.Fullscreen"></style>
+    <style name="ImageViewTheme" parent="@style/Theme.Base.AppCompat"></style>
 
     <style name="LoginFormContainer">
         <item name="android:layout_width">match_parent</item>

@@ -16,7 +16,11 @@ import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
 import com.satansin.android.compath.util.UITimeGenerator;
 
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v4.widget.SwipeRefreshLayout.OnRefreshListener;
 import android.support.v7.app.ActionBarActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -43,10 +47,12 @@ public class DiscussActivity extends ActionBarActivity {
 
 	private int groupId;
 	
-	private Menu menu;
-
 	private EditText inputEditText;
 	private ListView listView;
+	private SwipeRefreshLayout swipeRefreshLayout;
+	private TextView headerTextView;
+	private ImageView sendButtonImageView;
+	private MenuItem favorMenuItem;
 	
 	private HashMap<String, Bitmap> iconMaps;
 
@@ -59,6 +65,10 @@ public class DiscussActivity extends ActionBarActivity {
 	private ReceivingThread receivingThread;
 	
 	private boolean hasFavored = false;
+	
+	private CancelFavorGroupTask cancelFavorGroupTask;
+	private CheckGroupFavoredTask checkGroupFavoredTask;
+	private FavorGroupTask favorGroupTask;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -79,30 +89,56 @@ public class DiscussActivity extends ActionBarActivity {
 		iconMaps = new HashMap<String, Bitmap>();
 		
 		messageList = new ArrayList<Message>();
-		try {
-			List<Message> historyList = memoryService.loadHistoryMessage(groupId, 1, HISTORY_PAGE_SIZE);
-			for (int i = historyList.size() - 1; i >= 0; i--) {
-				messageList.add(historyList.get(i));
-				
-				new GetUsrIconTask(historyList.get(i).getIconUrl());
-			}
-		} catch (UnknownErrorException e) {
-		}
 
 		listView = (ListView) findViewById(R.id.discuss_list_view);
+		View headerView = getLayoutInflater().inflate(R.layout.header_discuss, null);
+		headerTextView = (TextView) headerView.findViewById(R.id.discuss_header_text);
+		listView.addHeaderView(headerView);
+		
 		messageAdapter = new MessageAdapter(this);
 		listView.setAdapter(messageAdapter);
 		listView.setSelection(listView.getBottom());
+		
+		swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe);
+		// 顶部刷新的样式 
+		swipeRefreshLayout.setColorScheme(R.color.holo_red_light, R.color.holo_green_light,  
+                R.color.holo_blue_bright, R.color.holo_orange_light);
+		swipeRefreshLayout.setOnRefreshListener(new OnRefreshListener() {
+			@Override
+			public void onRefresh() {
+				loadHistoryMessages();
+			}
+		});
+
+		sendButtonImageView = (ImageView) findViewById(R.id.discuss_sending);
+		sendButtonImageView.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				attemptSending();
+			}
+		});
 
 		inputEditText = (EditText) findViewById(R.id.discuss_input);
+		inputEditText.addTextChangedListener(new TextWatcher() {
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+			}
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+			}
+			@Override
+			public void afterTextChanged(Editable s) {
+				String text = inputEditText.getText().toString();
+				if (text.length() == 0) {
+					sendButtonImageView.setImageResource(R.drawable.send_disabled);
+				} else {
+					sendButtonImageView.setImageResource(R.drawable.send);
+				}
+			}
+		});
 
-		findViewById(R.id.discuss_sending).setOnClickListener(
-				new OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						attemptSending();
-					}
-				});
+		loadHistoryMessages();
 		
 		new EnterGroupTask().execute();
 		
@@ -116,7 +152,7 @@ public class DiscussActivity extends ActionBarActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.discuss, menu);
-		this.menu = menu;
+		favorMenuItem = menu.findItem(R.id.action_favor);
 		return true;
 	}
 
@@ -127,14 +163,39 @@ public class DiscussActivity extends ActionBarActivity {
 		// as you specify a parent activity in AndroidManifest.xml.
 		int id = item.getItemId();
 		if (id == R.id.action_favor) {
+			if (favorOperationsProcessing()) {
+				return true;
+			}
 			if (hasFavored) {
-				new CancelFavorGroupTask().execute();
+				setFavorMenuState(true);
+				cancelFavorGroupTask = new CancelFavorGroupTask();
+				cancelFavorGroupTask.execute();
 			} else {
-				new FavorGroupTask().execute();
+				setFavorMenuState(false);
+				favorGroupTask = new FavorGroupTask();
+				favorGroupTask.execute();
 			}
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+	
+	/**
+	 * 
+	 * @param toFavor If toFavor is true, set text into "favor" and set the icon into not-favored icon 
+	 */
+	private void setFavorMenuState(boolean toFavor) {
+		if (toFavor) {
+			favorMenuItem.setTitle(getString(R.string.action_favor));
+			favorMenuItem.setIcon(R.drawable.not_favored);
+		} else {
+			favorMenuItem.setTitle(getString(R.string.action_cancel_favor));
+			favorMenuItem.setIcon(R.drawable.favored);
+		}
+	}
+
+	private boolean favorOperationsProcessing() {
+		return (cancelFavorGroupTask != null || checkGroupFavoredTask != null || favorGroupTask != null);
 	}
 
 	@Override
@@ -150,6 +211,24 @@ public class DiscussActivity extends ActionBarActivity {
 		super.onDestroy();
 	}
 	
+	private void loadHistoryMessages() {
+		try {
+			int currentSize = messageList.size();
+			List<Message> historyList = memoryService.
+					loadHistoryMessage(groupId, currentSize + 1, currentSize + HISTORY_PAGE_SIZE);
+			
+			swipeRefreshLayout.setRefreshing(false);
+			if (currentSize > 0 && historyList.size() <= 0) {
+				headerTextView.setText(getString(R.string.error_non_history_msg));
+			}
+			for (Message message : historyList) {
+				messageList.add(0, message);
+				new GetUsrIconTask(message.getIconUrl()).execute();
+			}
+		} catch (UnknownErrorException e) {
+		}
+	}
+	
 	private class ReceivingThread extends Thread {
 		private boolean isReceiving = true;
 		ArrayList<Message> newMessages = new ArrayList<Message>();
@@ -162,21 +241,21 @@ public class DiscussActivity extends ActionBarActivity {
 				try {
 					newMessages = messageService
 							.receiveMessages(groupId, memoryService.getMySession());
-				} catch (Exception e1) {
+				} catch (Exception e) {
 				}
 				listView.post(new Runnable() {
 					@Override
 					public void run() {
 						for (Message message : newMessages) {
 							try {
-								message = memoryService.insertReceivedMessage(message, true);
+								message = memoryService.insertReceivedMessage(message, groupId);
 							} catch (UnknownErrorException e) {
 							}
 							if (message == null) {
 								continue;
 							}
 							message.setComingMsg(true);
-							appendMessage(message, listView
+							appendMessageOnUI(message, listView
 									.getLastVisiblePosition() == listView
 									.getCount() - 1);
 						}
@@ -203,13 +282,13 @@ public class DiscussActivity extends ActionBarActivity {
 		inputEditText.setText("");
 		Message message = null;
 		try {
-			message = memoryService.insertSendingMessage(text, groupId, false);
+			message = memoryService.insertSendingMessage(text, groupId);
 		} catch (UnknownErrorException e) {
 		}
 		if (message == null) {
 			return;
 		}
-		appendMessage(message, true);
+		appendMessageOnUI(message, true);
 
 		SendMessageTask sendMessageTask = new SendMessageTask();
 		sendMessageTask.execute(message);
@@ -217,9 +296,9 @@ public class DiscussActivity extends ActionBarActivity {
 		// TODO update sending status in SQLite
 	}
 
-	private void appendMessage(Message newMessage, boolean rollToBottom) {
+	private void appendMessageOnUI(Message newMessage, boolean rollToBottom) {
 		messageList.add(newMessage);
-		new GetUsrIconTask(newMessage.getIconUrl());
+		new GetUsrIconTask(newMessage.getIconUrl()).execute();
 		messageAdapter.notifyDataSetChanged();
 		if (rollToBottom) {
 			listView.setSelection(listView.getBottom());
@@ -230,9 +309,11 @@ public class DiscussActivity extends ActionBarActivity {
 
 		private LayoutInflater inflater;
 
-		private static final int MINIMUM_SHOWING_TIMETAG_DIFF_IN_MILLIS = 60 * 1000;
+		private static final int MINIMUM_SHOWING_TIMETAG_DIFF_IN_MILLIS = 3 * 60 * 1000;
+		
+		private ViewHolder viewHolder;
 
-		class ViewHolder {
+		private class ViewHolder {
 			public TextView timeTextView;
 			public ImageView iconImageView;
 //			public TextView usrnameTextView;
@@ -259,7 +340,7 @@ public class DiscussActivity extends ActionBarActivity {
 		}
 
 		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
+		public View getView(final int position, View convertView, ViewGroup parent) {
 			Message message = (Message) getItem(position);
 			boolean showTimeTag = true;
 			if (position > 0) {
@@ -282,7 +363,7 @@ public class DiscussActivity extends ActionBarActivity {
 								R.layout.message_item_right_without_timetag,
 								null);
 			}
-			ViewHolder viewHolder = new ViewHolder();
+			viewHolder = new ViewHolder();
 			viewHolder.timeTextView = (TextView) convertView
 					.findViewById(R.id.message_item_time);
 			viewHolder.iconImageView = (ImageView) convertView
@@ -300,10 +381,21 @@ public class DiscussActivity extends ActionBarActivity {
 //				viewHolder.usrnameTextView.setText(message.getFrom());
 //			}
 			viewHolder.contentTextView.setText(message.getContent());
+			
 			Bitmap iconBitmap = iconMaps.get(message.getIconUrl());
 			if (iconBitmap != null) {
 				viewHolder.iconImageView.setImageBitmap(iconBitmap);
 			}
+			viewHolder.iconImageView.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					Intent toImageViewIntent = new Intent(DiscussActivity.this, ImageViewActivity.class);
+					viewHolder.iconImageView.setDrawingCacheEnabled(true);
+					toImageViewIntent.putExtra(ImageViewActivity.EXTRA_THUMBNAIL, viewHolder.iconImageView.getDrawingCache());
+					toImageViewIntent.putExtra(ImageViewActivity.EXTRA_URL, ((Message) getItem(position)).getIconUrl());
+					startActivity(toImageViewIntent);
+				}
+			});
 
 			return convertView;
 		}
@@ -318,11 +410,7 @@ public class DiscussActivity extends ActionBarActivity {
 		@Override
 		protected Bitmap doInBackground(Void... params) {
 			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-			try {
-				return imageService.getBitmap(url, ImageService.THUMB_ICON);
-			} catch (UnknownErrorException e) {
-				return null;
-			}
+			return imageService.getBitmap(url, ImageService.THUMB_ICON_DISCUSS);
 		}
 		@Override
 		protected void onPostExecute(Bitmap result) {
@@ -380,7 +468,6 @@ public class DiscussActivity extends ActionBarActivity {
 	}
 	
 	private class ExitGroupTask extends AsyncTask<Void, Void, Void> {
-
 		@Override
 		protected Void doInBackground(Void... params) {
 			GroupParticipationService groupParticipationService = ServiceFactory.getGroupParticipationService();
@@ -390,7 +477,6 @@ public class DiscussActivity extends ActionBarActivity {
 			}
 			return ((Void) null);
 		}
-		
 	}
 	
 	private class SendMessageTask extends AsyncTask<Message, Void, Boolean> {
@@ -451,6 +537,8 @@ public class DiscussActivity extends ActionBarActivity {
 
 		@Override
 		protected void onPostExecute(final Boolean success) {
+			favorGroupTask = null;
+			
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
 					Toast.makeText(getApplicationContext(),
@@ -473,9 +561,9 @@ public class DiscussActivity extends ActionBarActivity {
 			}
 
 			if (success) {
-//				Toast.makeText(getApplicationContext(), R.string.success_favor,
-//						Toast.LENGTH_SHORT).show();
-				menu.findItem(R.id.action_favor).setTitle(getString(R.string.action_cancel_favor));
+				Toast.makeText(getApplicationContext(), R.string.success_favor,
+						Toast.LENGTH_SHORT).show();
+				setFavorMenuState(false);
 				DiscussActivity.this.hasFavored = true;
 			} else {
 				Toast.makeText(getApplicationContext(),
@@ -506,6 +594,8 @@ public class DiscussActivity extends ActionBarActivity {
 
 		@Override
 		protected void onPostExecute(final Boolean success) {
+			cancelFavorGroupTask = null;
+			
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
 					Toast.makeText(getApplicationContext(),
@@ -528,9 +618,9 @@ public class DiscussActivity extends ActionBarActivity {
 			}
 
 			if (success) {
-//				Toast.makeText(getApplicationContext(), R.string.success_cancel_favor,
-//						Toast.LENGTH_SHORT).show();
-				menu.findItem(R.id.action_favor).setTitle(getString(R.string.action_cancel_favor));
+				Toast.makeText(getApplicationContext(), R.string.success_cancel,
+						Toast.LENGTH_SHORT).show();
+				favorMenuItem.setTitle(getString(R.string.action_favor));
 				DiscussActivity.this.hasFavored = false;
 			} else {
 				Toast.makeText(getApplicationContext(),
@@ -553,8 +643,10 @@ public class DiscussActivity extends ActionBarActivity {
 
 		@Override
 		protected void onPostExecute(final Boolean hasFavored) {
+			checkGroupFavoredTask = null;
+			
 			if (hasFavored) {
-				menu.findItem(R.id.action_favor).setTitle(getString(R.string.action_cancel_favor));
+				setFavorMenuState(false);
 			}
 			DiscussActivity.this.hasFavored = hasFavored;
 		}

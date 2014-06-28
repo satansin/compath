@@ -9,7 +9,7 @@
         android:layout_height="60dp"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:src="@drawable/abc_ab_bottom_solid_dark_holo" />
+		android:background="#eee" />
 
     <TextView
         android:id="@+id/message_item_content"
@@ -19,5 +19,12 @@
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/message_item_icon"
         android:padding="8dp" />
+    
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="1px"
+        android:layout_alignParentBottom="true"
+        android:background="@color/divider_weak" >
+    </LinearLayout>
 
 </RelativeLayout>

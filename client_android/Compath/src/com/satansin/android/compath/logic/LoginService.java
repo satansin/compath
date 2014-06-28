@@ -6,6 +6,8 @@ public interface LoginService {
 
 	public boolean isFirstLogin();
 
-	public boolean logout(String session) throws NetworkTimeoutException, UnknownErrorException, NotLoginException;;
+	public boolean logout(String session) throws NetworkTimeoutException, UnknownErrorException, NotLoginException;
+
+	public String getIconUrl();
 
 }

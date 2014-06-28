@@ -34,10 +34,8 @@ public class UITimeGenerator {
 	}
 	
 	private String getCompactFormattedTime(long timeInMillis, boolean detail) {
-		Calendar time = Calendar.getInstance();
-		time.setTimeInMillis(timeInMillis);
-		return (detail ? new SimpleDateFormat("yyyyMMddhhmmss", Locale.getDefault()).format(time) :
-				new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(time));
+		return (detail ? new SimpleDateFormat("yyyyMMddhhmmss", Locale.getDefault()).format(new Date(timeInMillis)) :
+				new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(new Date(timeInMillis)));
 	}
 
 	public String getFormattedMessageTime(long timeInMillis) {

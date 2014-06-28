@@ -42,10 +42,11 @@ public class FavoriteGroupsActivity extends ActionBarActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_favorite_groups);
 
+		// TODO 美化这两个界面
 		ListView listView = (ListView) findViewById(R.id.favorite_groups_list_view);
 		favoriteGroupList = new ArrayList<HashMap<String, Object>>();
 		favoriteGroupAdapter = new SimpleAdapter(this, favoriteGroupList,
-				R.layout.group_item_favorite_groups,
+				R.layout.group_item_favorite_groups1,
 				new String[] { UI_GROUP_ITEM_USRNAME, UI_GROUP_ITEM_LOCATION,
 						UI_GROUP_ITEM_TITLE }, new int[] {
 						R.id.mygroups_item_usrname, R.id.mygroups_item_location,

@@ -7,6 +7,7 @@
         android:id="@+id/action_favor"
         android:orderInCategory="100"
         android:title="@string/action_favor"
-        app:showAsAction="ifRoom"/>
+        android:icon="@drawable/not_favored"
+        app:showAsAction="ifRoom" />
 
 </menu>

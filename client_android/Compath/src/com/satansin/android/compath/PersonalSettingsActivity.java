@@ -1,5 +1,8 @@
 package com.satansin.android.compath;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.satansin.android.compath.logic.ImageService;
 import com.satansin.android.compath.logic.LoginService;
 import com.satansin.android.compath.logic.MemoryService;
@@ -9,6 +12,8 @@ import com.satansin.android.compath.logic.PersonalSettingsService;
 import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
 import com.satansin.android.compath.logic.UploadService;
+import com.satansin.android.compath.qiniu.Conf;
+import com.satansin.android.compath.qiniu.JSONObjectRet;
 import com.satansin.android.compath.util.UITimeGenerator;
 
 import android.support.v7.app.ActionBarActivity;
@@ -21,6 +26,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -72,7 +78,6 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 				Intent toImageViewIntent = new Intent(PersonalSettingsActivity.this, ImageViewActivity.class);
 				iconImageView.setDrawingCacheEnabled(true);
 				toImageViewIntent.putExtra(ImageViewActivity.EXTRA_THUMBNAIL, iconImageView.getDrawingCache());
-				iconImageView.setDrawingCacheEnabled(false);
 				toImageViewIntent.putExtra(ImageViewActivity.EXTRA_URL, iconUrl);
 				startActivity(toImageViewIntent);
 			}
@@ -132,14 +137,24 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 	}
 	
 	private String capturedFileName;
+	private String croppedFileName;
 	
 	private void generateCapturedFileName() {
 		capturedFileName = new UITimeGenerator().getFormattedPhotoNameTime() + ".jpg";
 	}
 	
-	private String getCroppedFileName() {
-		String[] split = capturedFileName.split("\\.");
-		return (split[0] + "_crp." + split[1]);
+	private String getCroppedFileName(String fileName) {
+		String[] split = fileName.split("\\.");
+		if (split.length > 1) {
+			return (split[0] + "_crp." + split[1]);
+		} else {
+			return (split[0] + "_crp");
+		}
+	}
+	
+	private String getCroppedFileName(Uri uri) {
+		String[] split = uri.getPath().split("/");
+		return getCroppedFileName(split[split.length - 1]);
 	}
 	
 	private static final int REQUEST_CODE_CITY = 0;
@@ -152,9 +167,9 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		public void onClick(DialogInterface dialog, int which) {
 			switch (which) {
 			case 0:
-				Intent galleryIntent = new Intent();
-				galleryIntent.setType("image/*");
-				galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+				Intent galleryIntent = new Intent(Intent.ACTION_PICK, null);
+				galleryIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+//				galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
 				startActivityForResult(galleryIntent, REQUEST_CODE_IMAGE);
 				break;
 			case 1:
@@ -206,6 +221,8 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 	}
 	
 	private void startImageCropActivity(Uri uri) {
+		Log.w("uri", uri.getPath());
+		croppedFileName = getCroppedFileName(uri);
 		Intent toCropIntent = new Intent("com.android.camera.action.CROP");
 		try {
 			toCropIntent.setDataAndType(uri, "image/*");
@@ -234,7 +251,11 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 				}
 			}
 		} else if (requestCode == REQUEST_CODE_IMAGE && resultCode == RESULT_OK) {
-			startImageCropActivity(data.getData());
+			Uri uri = data.getData();
+			if (uri == null) {
+				return;
+			}
+			startImageCropActivity(uri);
 		} else if (requestCode == REQUEST_CODE_CAPTURE && resultCode == RESULT_OK) {
 			try {
 				startImageCropActivity(memoryService.getNewCapturingUri(capturedFileName));
@@ -251,32 +272,105 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			}
 			Uri croppedUri = null;
 			try {
-				croppedUri = memoryService.putLocalImage(bitmap, getCroppedFileName(), ImageService.ALBUM);
+				croppedUri = memoryService.putLocalImage(bitmap, croppedFileName, MemoryService.IMG_ALBUM);
 			} catch (UnknownErrorException e) {
 				return;
 			}
-			new UploadMyIconTask().execute(croppedUri);
+			new UploadMyIconTask(croppedUri).execute();
 		}
 	}
 	
-	private class UploadMyIconTask extends AsyncTask<Uri, Void, Boolean> {
+	private class UploadMyIconTask extends AsyncTask<Void, Void, String> {
 		private Exception exception;
+		private Uri uri;
+		public UploadMyIconTask(Uri uri) {
+			this.uri = uri;
+		}
 		@Override
-		protected Boolean doInBackground(Uri... params) {
+		protected String doInBackground(Void... params) {
+			String token = "";
 			try {
 				UploadService uploadService = ServiceFactory.getUploadService();
-				String token = uploadService.iconUploadToken(memoryService.getMySession());
+				token = uploadService.iconUploadToken(memoryService.getMySession());
 				if (token == null || token.length() <= 0) {
-					return false;
+					return "";
 				}
 				
-				ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-				String url = imageService.uploadBitmap(getApplicationContext(), token, params[0]);
-				if (url == null || url.length() == 0) {
-					return false;
+			} catch (NetworkTimeoutException e) {
+				exception = (NetworkTimeoutException) e;
+			} catch (UnknownErrorException e) {
+				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
+			}
+			return token;
+		}
+		@Override
+		protected void onPostExecute(String result) {
+			uploadMyIconTask = null;
+			if (exception != null) {
+				if (exception instanceof NetworkTimeoutException) {
+					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
+					return;
+				} else if (exception instanceof UnknownErrorException) {
+					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
+					return;
+				} else if (exception instanceof NotLoginException) {
+					try {
+						ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					} catch (UnknownErrorException e) {
+					}
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(PersonalSettingsActivity.this, LoginActivity.class);
+					startActivity(intent);
 				}
+			}
+			
+			if (result != null && result.length() != 0) {
+				executeUpload(result, uri);
+			} else {
+				Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+			}
+		}
+	}
+	
+	private void executeUpload(String token, Uri uri) {
+		ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
+		try {
+			imageService.uploadBitmap(getApplicationContext(), token, uri, new JSONObjectRet() {
+				@Override
+				public void onFailure(Exception ex) {
+					Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+				}
+				@Override
+				public void onSuccess(JSONObject obj) {
+					String uploadedUrl = null;
+					try {
+						uploadedUrl = Conf.SERVER_DOMAIN + obj.getString("hash");
+					} catch (JSONException e) {
+						Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+					}
+					if (uploadedUrl == null || uploadedUrl.length() == 0) {
+						Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+					}
+					new UpdateIconTask().execute(uploadedUrl);
+				}
+			});
+		} catch (Exception e) {
+			Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	private class UpdateIconTask extends AsyncTask<String, Void, Boolean> {
+		private Exception exception;
+		private String url;
+		@Override
+		protected Boolean doInBackground(String... params) {
+			url = params[0];
+			try {
+				UploadService uploadService = ServiceFactory.getUploadService();
 				
-				return uploadService.iconUpdate(memoryService.getMySession(), url);
+				return uploadService.iconUpdate(memoryService.getMySession(), params[0]);
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
@@ -288,7 +382,6 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		}
 		@Override
 		protected void onPostExecute(Boolean result) {
-			uploadMyIconTask = null;
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
 					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
@@ -310,6 +403,10 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			if (result) {
 				Toast.makeText(getApplicationContext(), R.string.success_update, Toast.LENGTH_SHORT).show();
 				new GetMyIconUrlTask().execute();
+				try {
+					memoryService.updateUsrIcon(url);
+				} catch (UnknownErrorException e) {
+				}
 			} else {
 				Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
 			}
@@ -337,11 +434,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		@Override
 		protected Bitmap doInBackground(Void... params) {
 			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-			try {
-				return imageService.getBitmap(iconUrl, ImageService.THUMB_ICON);
-			} catch (UnknownErrorException e) {
-				return null;
-			}
+			return imageService.getBitmap(iconUrl, ImageService.THUMB_ICON_PERSONAL_SETTINGS);
 		}
 		@Override
 		protected void onPostExecute(Bitmap result) {

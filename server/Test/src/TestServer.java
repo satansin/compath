@@ -37,6 +37,7 @@ public class TestServer {
 	public static final String PARAM_TOKEN = "tk";
 	public static final String PARAM_ACTION = "a";
 	public static final String PARAM_URL = "ur";
+	public static final String PARAM_LOCATIONS = "ls";
 	
 	public static final String PARAM_SENT = "sn";
 	public static final String PARAM_FAVORED = "f";
@@ -86,6 +87,7 @@ public class TestServer {
 	private static final String BUCKET_NAME = "loc-chat-image-server";
 	
 	private static final int MAX_FEED_COUNT = 20;
+	private static final int MAX_LOCATION_COUNT = 12;
 
 	String advice = "{\"type\":\"201\",\"session\":\"pppp\",\"first_login\":\"true\"}";
 
@@ -227,10 +229,61 @@ public class TestServer {
 			return imageUpdate(inputJson);
 		case 122:
 			return getMyiconUrl(inputJson);
+		case 123:
+			return getLocations(inputJson);
 		default:
 			break;
 		}
 		return "";
+	}
+
+	private String getLocations(JSONObject inputJson) {
+		JSONObject result = new JSONObject();
+		result.put(RETURN_TYPE, 223);
+		JSONArray array = new JSONArray();
+
+		try {
+			int lon = inputJson.getInt(PARAM_LONGITUDE);
+			int lat = inputJson.getInt(PARAM_LATITUDE);
+			
+			// TODO 增加地点过滤条件
+			String sql = "select `location`.`id`, `location`.`name`, `location`.`latitude`, `location`.`longitude` " +
+						 "from `location` " +
+						 "where `location`.`latitude` >= ? and " +
+						 	   "`location`.`latitude` <= ? and " +
+						 	   "`location`.`longitude` >= ? and " +
+						 	   "`location`.`longitude` <= ?;";
+			PreparedStatement preparedStatement = connection.prepareStatement(sql);
+			preparedStatement.setInt(1, (int)(lat - 3e4));
+			preparedStatement.setInt(2, (int)(lat + 3e4));
+			preparedStatement.setInt(3, (int)(lon - 3e4));
+			preparedStatement.setInt(4, (int)(lon + 3e4));
+			
+			ResultSet resultSet = preparedStatement.executeQuery();
+			int i = 0;
+			while (resultSet.next() && (i++) < MAX_LOCATION_COUNT) {
+				JSONObject locationJson = new JSONObject();
+				locationJson.put(PARAM_LOCATION_ID, resultSet.getInt("id"));
+				locationJson.put(PARAM_LOCATION_NAME, resultSet.getString("name"));
+				locationJson.put(PARAM_LATITUDE, resultSet.getInt("latitude"));
+				locationJson.put(PARAM_LONGITUDE, resultSet.getInt("longitude"));
+				array.add(locationJson);
+			}
+			if (array.size() <= 0) {
+				result.put(PARAM_LOCATIONS, new JSONObject());
+				result.put(RETURN_ERROR, 302);
+				return result.toString();
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			result.put(PARAM_LOCATIONS, new JSONObject());
+			result.put(RETURN_ERROR, 300);
+			return result.toString();
+		}
+
+		result.put(PARAM_LOCATIONS, array);
+		result.put(RETURN_ERROR, 0);
+		return result.toString();
 	}
 
 	private String getMyiconUrl(JSONObject inputJson) {
@@ -1188,7 +1241,7 @@ public class TestServer {
 		
 		try {
 			String sql = "select `group`.`id`, `group`.`title`, `group`.`last_active_time`, `user`.`username`, count(`participation`.`user_id`) as `number_of_members`, `location`.`name`, `user_detail`.`icon_url` " +
-						 "from `user`, `user_detail` `location`, `group` left join `participation`  on `group`.`id` = `participation`.`group_id` " +
+						 "from `user`, `user_detail`, `location`, `group` left join `participation`  on `group`.`id` = `participation`.`group_id` " +
 						 "where `group`.`owner_id` = ? and " +
 						  	   "`user`.`id` = `group`.`owner_id` and " +
 						  	   "`user`.`id` = `user_detail`.`user_id` and " +

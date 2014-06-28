@@ -1,5 +1,8 @@
 package com.satansin.android.compath.socket;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.satansin.android.compath.logic.Location;
 import com.satansin.android.compath.logic.LocationService;
 import com.satansin.android.compath.logic.NetworkTimeoutException;
@@ -97,6 +100,44 @@ public class LocationServiceSocketImpl implements LocationService {
 		}
 		
 		return created;
+	}
+
+	@Override
+	public List<Location> getLocationsByPoint(int latitude, int longitude)
+			throws UnknownErrorException, NetworkTimeoutException,
+			NonLocationException {
+		List<Location> locations = new ArrayList<Location>();
+		SocketMsg msg = new SocketMsg(SocketMsg.ASK_FOR_LOCATIONS);
+		msg.putInt(SocketMsg.PARAM_LATITUDE, latitude);
+		msg.putInt(SocketMsg.PARAM_LONGITUDE, longitude);
+		
+		SocketConnector connector = new SocketConnector();
+		SocketMsg result = connector.send(msg, 8000);
+		
+		if (result == null) {
+			throw new NetworkTimeoutException();
+		}
+
+		if (result.getMsgType() == SocketMsg.RE_LOCATIONS) {
+			int error = result.getMsgError();
+			switch (error) {
+			case SocketMsg.ERROR_NON_LOC:
+				throw new NonLocationException();
+			case SocketMsg.ERROR_UNKNOWN:
+				throw new UnknownErrorException();
+			default:
+				break;
+			}
+			
+			SocketMsg[] contents = result.getArrayMsgContents(SocketMsg.PARAM_LOCATIONS);
+			for (SocketMsg content : contents) {
+				locations.add((Location) content.getBeanFromSocketMessage(SocketMsg.BEAN_LOCATION));
+			}
+		} else {
+			throw new UnknownErrorException();
+		}
+		
+		return locations;
 	}
 
 }

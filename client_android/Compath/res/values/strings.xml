@@ -9,9 +9,10 @@
     <string name="hint_group_title">输入群组标题，最多30个字</string>
     <string name="hint_location_name">输入地点名称，最多15个字</string>
     <string name="mygroups_personal_settings">我的群组</string>
+    <string name="swipe_more_msg">下滑显示更多消息</string>
     <string name="favorite_groups_personal_settings">收藏的群组</string>
     <string name="finish_selection">完成</string>
-    <string name="title_activity_feed">Compath</string>
+    <string name="title_activity_feed">点聊</string>
     <string name="title_board_fragment">公告墙</string>
     <string name="title_consult_fragment">问答室</string>
     <string name="title_person_fragment">我</string>
@@ -31,12 +32,12 @@
     <string name="action_settings">设置</string>
     <string name="action_personal_settings">个人设置</string>
     <string name="action_create_group">创建群组</string>
-    <string name="action_refresh">刷新</string>
+    <string name="action_refresh">定位并刷新</string>
     <string name="action_finish_creation">完成</string>
     <string name="action_exit">退出</string>
     <string name="action_logout">注销当前账号</string>
     <string name="action_create_location">创建地点</string>
-    <string name="action_upload_icon">修改头像</string>
+    <string name="action_upload_icon">上传头像</string>
     <string name="success_create">创建成功</string>
     <string name="success_favor">收藏成功</string>
     <string name="success_cancel">取消成功</string>
@@ -50,6 +51,7 @@
     <string name="error_unknown">出现未知错误</string>
     <string name="error_network_timeout">请检查网络连接</string>
     <string name="error_non_loc">无定位</string>
+    <string name="error_non_history_msg">没有更多的消息要显示</string>
     <string name="error_locating_timeout">定位失败，请手动选择地点</string>
     <string name="error_title_required">标题不能为空</string>
     <string name="error_title_too_long">标题不能超过30个字符</string>

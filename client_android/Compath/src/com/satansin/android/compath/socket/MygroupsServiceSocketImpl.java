@@ -81,7 +81,7 @@ public class MygroupsServiceSocketImpl implements MygroupsService {
 	@Override
 	public boolean favorGroup(int groupId, String session) throws NetworkTimeoutException, UnknownErrorException, NotLoginException {
 		boolean added = false;
-		SocketMsg msg = new SocketMsg(SocketMsg.ASK_FOR_FAVORITE_GROUPS);
+		SocketMsg msg = new SocketMsg(SocketMsg.ASK_FOR_GROUP_FAVORING);
 		msg.putInt(SocketMsg.PARAM_GROUP_ID, groupId);
 		msg.putString(SocketMsg.PARAM_SESSION, session);
 		

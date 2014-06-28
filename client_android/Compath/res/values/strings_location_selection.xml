@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string name="location_selection_tap_pops">点击气泡选择地点</string>
+    <string name="location_selection_error_non_loc_tap">当前无地点，点击地图以查看附近地点</string>
+    <string name="location_selection_loading">地点加载中&#8230;</string>
+    
+</resources>
