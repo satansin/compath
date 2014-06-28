@@ -40,10 +40,12 @@
     <string name="success_create">创建成功</string>
     <string name="success_favor">收藏成功</string>
     <string name="success_cancel">取消成功</string>
+    <string name="success_update">修改成功</string>
     <string name="error_create_fail_retry">创建失败，请重试</string>
     <string name="error_favor_fail_retry">收藏失败，请重试</string>
     <string name="error_set_fail_retry">设置失败，请重试</string>
-    <string name="error_cancel_fail_retry"></string>
+    <string name="error_cancel_fail_retry">操作失败，请重试</string>
+    <string name="error_update_fail">修改失败</string>
     <string name="error_unknown_retry">出现未知错误，请重试</string>
     <string name="error_unknown">出现未知错误</string>
     <string name="error_network_timeout">请检查网络连接</string>
@@ -54,6 +56,7 @@
     <string name="error_name_required">名称不能为空</string>
     <string name="error_name_too_long">名称不能超过30个字符</string>
     <string name="error_invalid_location">创建群组时必须选择一个具体的地点</string>
+    <string name="error_non_storage">未找到存储卡位置</string>
     <string name="alert_cancel_title">确认取消</string>
     <string name="alert_cancel_message_create">是否取消创建？</string>
     <string name="alert_exit_title">确认退出</string>
@@ -61,10 +64,15 @@
     <string name="alert_positive">是</string>
     <string name="alert_negative">否</string>
     <string name="alert_create_loc_title">创建地点</string>
+    <string name="alert_upload_icon_title">上传头像</string>
 
     <string-array name="alert_create_loc_list">
         <item>当前位置</item>
         <item>自己选择</item>
+    </string-array>
+    <string-array name="alert_upload_icon_list">
+        <item>选择本地相册</item>
+        <item>拍照</item>
     </string-array>
     <string-array name="province_names">
         <item>北京</item>

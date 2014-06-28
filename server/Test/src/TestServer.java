@@ -78,7 +78,7 @@ public class TestServer {
 	private static final String RETURN_ERROR = "e";
 
 	private static final String DRIVER = "com.mysql.jdbc.Driver";
-	private static final String URL = "jdbc:mysql://localhost:3306/compath";
+	private static final String URL = "jdbc:mysql://localhost:3306/compath?autoReconnect=true";
 	private static final String USER = "root";
 	private static final String PASSWORD = "root";
 	private Connection connection;
@@ -1247,10 +1247,11 @@ public class TestServer {
 		}
 		
 		try {
-			String sql = "select `message`.`content`, `message`.`time`, `user`.`username`, `user`.`id` " +
-						 "from `message`, `user` " +
+			String sql = "select `message`.`content`, `message`.`time`, `user`.`username`, `user`.`id`, `user_detail`.`icon_url` " +
+						 "from `message`, `user`, `user_detail` " +
 						 "where `message`.`group_id` = ? and " +
 						  	   "`message`.`sender_id` = `user`.`id` and " +
+						  	   "`user`.`id` = `user_detail`.`user_id` and " +
 						  	   "`message`.`time` > " +
 						  	   		"(select `last_received_time` from `participation` where `group_id` = ? and `user_id` = ?);";
 			PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -1267,6 +1268,7 @@ public class TestServer {
 				message.put(PARAM_MSG_CONTENT, resultSet.getString("content"));
 				message.put(PARAM_MSG_TIME, resultSet.getLong("time"));
 				message.put(PARAM_MSG_FROM, resultSet.getString("username"));
+				message.put(PARAM_URL, resultSet.getString("icon_url"));
 				messageArray.add(message);
 			}
 			
@@ -1476,6 +1478,7 @@ public class TestServer {
 		result.put(RETURN_TYPE, 201);
 		int session = 0;
 		boolean firstLogin = false;
+		String iconUrl = "";
 
 		boolean valid = false;
 		int id = 0;
@@ -1483,7 +1486,7 @@ public class TestServer {
 			String username = inputJson.getString(PARAM_USRNAME);
 			String password = inputJson.getString(PARAM_PASSWORD);
 			
-			String sql = "select `user`.`id`, `user_detail`.`city_id` " +
+			String sql = "select `user`.`id`, `user_detail`.`city_id`, `user_detail`.`icon_url` " +
 						 "from `user`, `user_detail` " +
 						 "where `user`.`username` = ? and " +
 						 	   "`user`.`password` = ? and " +
@@ -1500,6 +1503,7 @@ public class TestServer {
 				if (city == 0) {
 					firstLogin = true;
 				}
+				iconUrl = resultSet.getString("icon_url");
 			}
 
 			resultSet.close();
@@ -1508,6 +1512,7 @@ public class TestServer {
 			e.printStackTrace();
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
@@ -1515,6 +1520,7 @@ public class TestServer {
 		if (!valid) {
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, "301");
 			return result.toString();
 		}
@@ -1529,6 +1535,7 @@ public class TestServer {
 			e.printStackTrace();
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
@@ -1553,6 +1560,7 @@ public class TestServer {
 			if (session <= 0) {
 				result.put(PARAM_SESSION, "");
 				result.put(PARAM_FIRST_LOGIN, 0);
+				result.put(PARAM_URL, "");
 				result.put(RETURN_ERROR, 300);
 				return result.toString();
 			}
@@ -1560,12 +1568,14 @@ public class TestServer {
 			e.printStackTrace();
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
 		if (!sessionInserted) {
 			result.put(PARAM_SESSION, "");
 			result.put(PARAM_FIRST_LOGIN, 0);
+			result.put(PARAM_URL, "");
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
@@ -1576,6 +1586,7 @@ public class TestServer {
 		} else {
 			result.put(PARAM_FIRST_LOGIN, 0);
 		}
+		result.put(PARAM_URL, iconUrl);
 		result.put(RETURN_ERROR, 0);
 		return result.toString();
 	}

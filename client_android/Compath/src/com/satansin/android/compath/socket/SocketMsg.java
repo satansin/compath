@@ -575,6 +575,7 @@ public class SocketMsg {
 			message.setContent(getStringMsgContent(PARAM_MSG_CONTENT));
 			message.setFrom(getStringMsgContent(PARAM_MSG_FROM));
 			message.setTime(getLongMsgContent(PARAM_MSG_TIME));
+			message.setIconUrl(getStringMsgContent(PARAM_URL));
 			return message;
 		case BEAN_CITY:
 			City city = new City();

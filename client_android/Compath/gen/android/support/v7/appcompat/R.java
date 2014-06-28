@@ -343,7 +343,11 @@ public final class R {
 		public static final int abc_search_dropdown_item_icons_2line = 0x7f030015;
 		public static final int abc_search_view = 0x7f030016;
 		public static final int abc_simple_decor = 0x7f030017;
+<<<<<<< HEAD
 		public static final int support_simple_spinner_dropdown_item = 0x7f030034;
+=======
+		public static final int support_simple_spinner_dropdown_item = 0x7f030033;
+>>>>>>> 76219ec50cb8fc2c07b827b5c4443272e03365f2
 	}
 	public static final class string {
 		public static final int abc_action_bar_home_description = 0x7f0a0001;

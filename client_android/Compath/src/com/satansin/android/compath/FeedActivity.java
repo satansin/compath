@@ -393,7 +393,10 @@ public class FeedActivity extends ActionBarActivity {
 					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
 					return;
 				} else if (exception instanceof NotLoginException) {
-					ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					try {
+						ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					} catch (UnknownErrorException e) {
+					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(FeedActivity.this, LoginActivity.class);
 					startActivity(intent);
@@ -500,10 +503,17 @@ public class FeedActivity extends ActionBarActivity {
 		@Override
 		protected Bitmap doInBackground(Void... params) {
 			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-			return imageService.getBitmap(url, ImageService.THUMB_ICON);
+			try {
+				return imageService.getBitmap(url, ImageService.THUMB_ICON);
+			} catch (UnknownErrorException e) {
+				return null;
+			}
 		}
 		@Override
 		protected void onPostExecute(Bitmap result) {
+			if (result == null) {
+				return;
+			}
 			feedList.get(position).bitmap = result;
 			feedAdapter.notifyDataSetChanged();
 		}
