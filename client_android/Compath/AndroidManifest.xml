@@ -135,6 +135,13 @@
             android:label="@string/title_activity_image_view"
             android:theme="@style/ImageViewTheme" >
         </activity>
+        
+        <activity
+            android:name="com.satansin.android.compath.ImageShower"
+            android:label="imageshower">
+        </activity>
+
+        
     </application>
 
 </manifest>
