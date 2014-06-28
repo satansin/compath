@@ -1,8 +1,34 @@
 package com.satansin.android.compath;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.v7.app.ActionBarActivity;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.satansin.android.compath.logic.GroupParticipationService;
 import com.satansin.android.compath.logic.MemoryService;
@@ -11,27 +37,10 @@ import com.satansin.android.compath.logic.MessageService;
 import com.satansin.android.compath.logic.MygroupsService;
 import com.satansin.android.compath.logic.NetworkTimeoutException;
 import com.satansin.android.compath.logic.NotLoginException;
+import com.satansin.android.compath.logic.PictureMessage;
 import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
 import com.satansin.android.compath.util.UITimeGenerator;
-
-import android.support.v7.app.ActionBarActivity;
-import android.content.Context;
-import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 public class DiscussActivity extends ActionBarActivity {
 
@@ -43,6 +52,9 @@ public class DiscussActivity extends ActionBarActivity {
 
 	private EditText inputEditText;
 	private ListView listView;
+	
+	private Button loadpicBtn = null;
+	private Button cameraBtn = null;
 
 	private List<Message> messageList;
 	private MessageAdapter messageAdapter;
@@ -53,6 +65,9 @@ public class DiscussActivity extends ActionBarActivity {
 	private ReceivingThread receivingThread;
 	
 	private boolean hasFavored = false;
+	private Uri outputFileUri = null; 
+    private static final int IMAGE_REQUEST_CODE = 1000;
+    private static final int CAMERA_REQUEST_CODE = 1001;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +100,27 @@ public class DiscussActivity extends ActionBarActivity {
 						attemptSending();
 					}
 				});
+		
+		loadpicBtn = (Button) findViewById(R.id.loadpicBtn);
+		loadpicBtn.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				loadpic();
+			}
+
+		});
+		
+		cameraBtn = (Button) findViewById(R.id.cameraBtn);
+		cameraBtn.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				camera();
+			}
+		});
 		
 		new EnterGroupTask().execute();
 		
@@ -490,4 +526,65 @@ public class DiscussActivity extends ActionBarActivity {
 		}
 	}
 
+	
+	private void loadpic(){
+		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);  
+        intent.addCategory(Intent.CATEGORY_OPENABLE);  
+        intent.setType("image/*");  
+        startActivityForResult(Intent.createChooser(intent, "选择图片"), 1000);  
+	}
+	
+	private void camera(){
+		File file = new File(Environment.getExternalStorageDirectory(), "textphoto.jpg");  
+        outputFileUri = Uri.fromFile(file);  
+
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);  
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);  
+        startActivityForResult(intent, 1001); 
+	}
+	
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {  
+        super.onActivityResult(requestCode, resultCode, data);  
+//    	private ImageView iv;  
+    	Bitmap bmp = null;  
+
+    	
+        if (requestCode == IMAGE_REQUEST_CODE) {  
+              
+            if(data == null){  
+                return;  
+            }  
+              
+            Uri uri = data.getData();  
+            String[] proj = { MediaStore.Images.Media.DATA };  
+            @SuppressWarnings("deprecation")
+			Cursor cursor = managedQuery(uri, proj, // Which  
+                                                                    // columns  
+                                                                    // to return  
+                    null, // WHERE clause; which rows to return (all rows)  
+                    null, // WHERE clause selection arguments (none)  
+                    null); // Order-by clause (ascending by name)  
+  
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);  
+            cursor.moveToFirst();  
+  
+            String path = cursor.getString(column_index);  
+  
+            if (bmp != null)// 如果不释放的话，不断取图片，将会内存不够  
+                bmp.recycle();  
+  
+            bmp = BitmapFactory.decodeFile(path);  
+            //TODO发送图片消息
+  
+        } else if (requestCode == CAMERA_REQUEST_CODE) {  
+            bmp = BitmapFactory.decodeFile(outputFileUri.getPath());  
+            //TODO发送图片消息
+        } else {  
+            Toast.makeText(this, "请重新选择图片", Toast.LENGTH_SHORT).show();  
+        }  
+  
+    }  
+	
+	
 }
