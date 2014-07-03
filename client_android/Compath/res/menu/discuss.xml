@@ -8,6 +8,12 @@
         android:orderInCategory="100"
         android:title="@string/action_favor"
         android:icon="@drawable/not_favored"
+        app:showAsAction="always" />
+    
+    <item
+        android:id="@+id/action_view_pics"
+        android:orderInCategory="100"
+        android:title="@string/action_view_pics"
         app:showAsAction="ifRoom" />
 
 </menu>

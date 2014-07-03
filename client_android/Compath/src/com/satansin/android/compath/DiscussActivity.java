@@ -212,6 +212,8 @@ public class DiscussActivity extends ActionBarActivity {
 				favorGroupTask.execute();
 			}
 			return true;
+		} else if (id == R.id.action_view_pics) {
+			// TODO
 		}
 		return super.onOptionsItemSelected(item);
 	}

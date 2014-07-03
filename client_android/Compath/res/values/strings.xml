@@ -38,6 +38,7 @@
     <string name="action_logout">注销当前账号</string>
     <string name="action_create_location">创建地点</string>
     <string name="action_upload_icon">上传头像</string>
+    <string name="action_view_pics">查看图片集</string>
     <string name="success_create">创建成功</string>
     <string name="success_favor">收藏成功</string>
     <string name="success_cancel">取消成功</string>
