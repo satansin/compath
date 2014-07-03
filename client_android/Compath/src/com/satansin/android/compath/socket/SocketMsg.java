@@ -390,6 +390,7 @@ public class SocketMsg {
 	public static final String PARAM_MSG_CONTENT = "mc";
 	public static final String PARAM_MSG_TIME = "mt";
 	public static final String PARAM_MSG_FROM = "mf";
+	public static final String PARAM_MSG_TYPE = "mt";
 	
 	public static final String PARAM_CITY_ID = "ci";
 	public static final String PARAM_CITY_NAME = "cn";
@@ -401,8 +402,7 @@ public class SocketMsg {
 	public static final String PARAM_GROUP_NUMBER_MEMBERS = "gn";
 	
 	public static final int ACTION_ICON = 1;
-	public static final int ACTION_MSG = 2;
-	public static final int ACTION_PHOTO = 3;
+	public static final int ACTION_PHOTO = 2;
 	
 	private static final String OPCODE_KEY = "o";
 	private static final String RETURN_TYPE = "t";
@@ -603,6 +603,7 @@ public class SocketMsg {
 			message.setFrom(getStringMsgContent(PARAM_MSG_FROM));
 			message.setTime(getLongMsgContent(PARAM_MSG_TIME));
 			message.setIconUrl(getStringMsgContent(PARAM_URL));
+			message.setType(getIntMsgContent(PARAM_MSG_TYPE));
 			return message;
 		case BEAN_CITY:
 			City city = new City();

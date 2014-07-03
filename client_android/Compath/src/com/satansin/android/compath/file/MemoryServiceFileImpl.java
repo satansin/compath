@@ -7,7 +7,6 @@ import java.util.List;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.util.Log;
 
 import com.satansin.android.compath.file.FileHelper.Session;
 import com.satansin.android.compath.logic.City;
@@ -18,8 +17,6 @@ import com.satansin.android.compath.logic.UnknownErrorException;
 public class MemoryServiceFileImpl implements MemoryService {
 	
 	private static MemoryServiceFileImpl instance;
-	
-//	private int messageAutoIncreasedId = 0;
 	
 	private Context context;
 	
@@ -111,7 +108,6 @@ public class MemoryServiceFileImpl implements MemoryService {
 			FileHelper helper = new FileHelper(context);
 			helper.openUsrInputSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
 			int count = helper.getIntFromSerialFile();
-			Log.w("read_count", String.valueOf(count)); // TODO
 
 			int selectedIndex = 0;
 			for (int i = 0; i < count; i++) {
@@ -134,10 +130,11 @@ public class MemoryServiceFileImpl implements MemoryService {
 		return list;
 	}
 	
-	private void updateHistoryMessages(Message newMessage, String usrname) throws UnknownErrorException {
+	private Message addToHistoryMessages(Message newMessage, String usrname) throws UnknownErrorException {
 		try {
 			FileHelper helper = new FileHelper(context);
 			helper.openUsrInputSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
+			
 			int count = helper.getIntFromSerialFile();
 			ArrayList<Message> historyMsgList = new ArrayList<Message>();
 			historyMsgList.add(newMessage);
@@ -145,6 +142,13 @@ public class MemoryServiceFileImpl implements MemoryService {
 				Message message = (Message) helper.getObjectFromSerialFile();
 				historyMsgList.add(message);
 			}
+			
+			if (historyMsgList.size() <= 1) {
+				newMessage.setId(1);
+			} else {
+				newMessage.setId(historyMsgList.get(1).getId() + 1);
+			}
+			
 			helper.closeSerialFile();
 			
 			helper.openUsrOutputSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, usrname);
@@ -158,18 +162,62 @@ public class MemoryServiceFileImpl implements MemoryService {
 			e.printStackTrace();
 			throw new UnknownErrorException();
 		}
+		
+		return newMessage;
+	}
+
+	@Override
+	public boolean setMessageSent(int messageId, boolean messageSent, String url)
+			throws UnknownErrorException {
+		boolean messageFound = false;
+		try {
+			FileHelper helper = new FileHelper(context);
+			helper.openUsrInputSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, getMyUsrname());
+			
+			int count = helper.getIntFromSerialFile();
+			ArrayList<Message> historyMsgList = new ArrayList<Message>();
+			for (int i = 0; i < count; i++) {
+				Message message = (Message) helper.getObjectFromSerialFile();
+				if (message.getId() == messageId) {
+					messageFound = true;
+					if (messageSent) {
+						message.setSendingState(Message.STATE_SENT);
+						if (message.getType() == Message.TYPE_PIC) {
+							message.setContent(url);
+						}
+					} else {
+						message.setSendingState(Message.STATE_FAILED);
+					}
+				}
+				historyMsgList.add(message);
+			}
+			
+			helper.closeSerialFile();
+			
+			helper.openUsrOutputSerialFile(FileHelper.OBJECT_HISTORY_MESSAGES, getMyUsrname());
+			helper.writeObjectToSerialFile(count);
+			for (int i = 0; i < historyMsgList.size(); i++) {
+				helper.writeObjectToSerialFile(historyMsgList.get(i));
+			}
+			helper.closeSerialFile();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new UnknownErrorException();
+		}
+		return messageFound;
 	}
 	
 	@Override
-	public Message insertSendingMessage(String text, int groupId) throws UnknownErrorException {
+	public Message insertSendingMessage(String text, int groupId, int type) throws UnknownErrorException {
 		String usrname = getMyUsrname();
 		if (usrname.length() <= 0) {
 			return null;
 		}
 		
-		Message newMessage = new Message(0, text, Calendar.getInstance().getTimeInMillis(), false, getMyUsrname(), groupId, currentSession.iconUrl);
+		Message newMessage = new Message(0, type, text, Calendar.getInstance().getTimeInMillis(), 
+				false, getMyUsrname(), groupId, currentSession.iconUrl, Message.STATE_SENDING);
 		
-		updateHistoryMessages(newMessage, usrname);
+		newMessage = addToHistoryMessages(newMessage, usrname);
 		return newMessage;
 	}
 
@@ -182,13 +230,12 @@ public class MemoryServiceFileImpl implements MemoryService {
 			return null;
 		}
 		
-		updateHistoryMessages(message, usrname);
+		message = addToHistoryMessages(message, usrname);
 		return message;
 	}
 
 	@Override
 	public boolean saveHistoryMessage(int groupId) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

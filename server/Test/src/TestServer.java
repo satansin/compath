@@ -7,7 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -38,6 +40,7 @@ public class TestServer {
 	public static final String PARAM_ACTION = "a";
 	public static final String PARAM_URL = "ur";
 	public static final String PARAM_LOCATIONS = "ls";
+	public static final String PARAM_URLS = "us";
 	
 	public static final String PARAM_SENT = "sn";
 	public static final String PARAM_FAVORED = "f";
@@ -60,6 +63,7 @@ public class TestServer {
 	public static final String PARAM_MSG_CONTENT = "mc";
 	public static final String PARAM_MSG_TIME = "mt";
 	public static final String PARAM_MSG_FROM = "mf";
+	public static final String PARAM_MSG_TYPE = "mt";
 	
 	public static final String PARAM_CITY_ID = "ci";
 	public static final String PARAM_CITY_NAME = "cn";
@@ -71,8 +75,7 @@ public class TestServer {
 	public static final String PARAM_GROUP_NUMBER_MEMBERS = "gn";
 	
 	public static final int ACTION_ICON = 1;
-	public static final int ACTION_MSG = 2;
-	public static final int ACTION_PHOTO = 3;
+	public static final int ACTION_PHOTO = 2;
 	
 	private static final String OPCODE_KEY = "o";
 	private static final String RETURN_TYPE = "t";
@@ -88,6 +91,7 @@ public class TestServer {
 	
 	private static final int MAX_FEED_COUNT = 20;
 	private static final int MAX_LOCATION_COUNT = 12;
+	private static final int MAX_PIC_COUNT = 50;
 
 	String advice = "{\"type\":\"201\",\"session\":\"pppp\",\"first_login\":\"true\"}";
 
@@ -231,10 +235,45 @@ public class TestServer {
 			return getMyiconUrl(inputJson);
 		case 123:
 			return getLocations(inputJson);
+		case 124:
+			return getPicsInGroup(inputJson);
 		default:
 			break;
 		}
 		return "";
+	}
+
+	private String getPicsInGroup(JSONObject inputJson) {
+		JSONObject result = new JSONObject();
+		result.put(RETURN_TYPE, 224);
+		JSONArray array = new JSONArray();
+
+		try {
+			int groupId = inputJson.getInt(PARAM_GROUP_ID);
+			
+			String sql = "select `pic_message`.`url` " +
+						 "from `pic_message` " +
+						 "where `pic_message`.`group_id` = ?;";
+			PreparedStatement preparedStatement = connection.prepareStatement(sql);
+			preparedStatement.setInt(1, groupId);
+			
+			ResultSet resultSet = preparedStatement.executeQuery();
+			int i = 0;
+			while (resultSet.next() && (i++) < MAX_PIC_COUNT) {
+				JSONObject locationJson = new JSONObject();
+				locationJson.put(PARAM_URL, resultSet.getInt("url"));
+				array.add(locationJson);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			result.put(PARAM_URLS, new JSONArray());
+			result.put(RETURN_ERROR, 300);
+			return result.toString();
+		}
+
+		result.put(PARAM_URLS, array);
+		result.put(RETURN_ERROR, 0);
+		return result.toString();
 	}
 
 	private String getLocations(JSONObject inputJson) {
@@ -270,13 +309,13 @@ public class TestServer {
 				array.add(locationJson);
 			}
 			if (array.size() <= 0) {
-				result.put(PARAM_LOCATIONS, new JSONObject());
+				result.put(PARAM_LOCATIONS, new JSONArray());
 				result.put(RETURN_ERROR, 302);
 				return result.toString();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			result.put(PARAM_LOCATIONS, new JSONObject());
+			result.put(PARAM_LOCATIONS, new JSONArray());
 			result.put(RETURN_ERROR, 300);
 			return result.toString();
 		}
@@ -380,7 +419,52 @@ public class TestServer {
 				result.put(RETURN_ERROR, 0);
 				return result.toString();
 			}
-		// TODO other cases
+		case ACTION_PHOTO:
+			boolean messageInserted = false;
+			int groupId = inputJson.getInt(PARAM_GROUP_ID);
+			try {
+				String msgContent = inputJson.getString(PARAM_URL);
+				long time = Calendar.getInstance().getTimeInMillis();
+				
+				String sql = "insert into `pic_message` (`content`, `time`, `group_id`, `sender_id`) values(?, ?, ?, ?);";
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.setString(1, msgContent);
+				preparedStatement.setLong(2, time);
+				preparedStatement.setInt(3, groupId);
+				preparedStatement.setInt(4, userid);
+				
+				preparedStatement.execute();
+				messageInserted = (preparedStatement.getUpdateCount() == 1);
+				preparedStatement.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+				result.put(PARAM_IMAGE_UPDATED, 0);
+				result.put(RETURN_ERROR, 300);
+				return result.toString();
+			}
+			if (!messageInserted) {
+				result.put(PARAM_IMAGE_UPDATED, 0);
+				result.put(RETURN_ERROR, 300);
+				return result.toString();
+			}
+			
+			try {
+				long current = Calendar.getInstance().getTimeInMillis();
+				String sql = "update `group` set `last_active_time` = ? where `id` = ?;";
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.setLong(1, current);
+				preparedStatement.setInt(2, groupId);
+				preparedStatement.execute();
+			} catch (SQLException e) {
+				e.printStackTrace();
+				result.put(PARAM_IMAGE_UPDATED, 0);
+				result.put(RETURN_ERROR, 300);
+				return result.toString();
+			}
+			
+			result.put(PARAM_IMAGE_UPDATED, 1);
+			result.put(RETURN_ERROR, 0);
+			return result.toString();
 		default:
 			break;
 		}
@@ -1278,12 +1362,46 @@ public class TestServer {
 		result.put(RETURN_ERROR, 0);
 		return result.toString();
 	}
+	
+	private class BeanMessage implements Comparable<BeanMessage> {
+		public BeanMessage(String content, long time, String from,
+				String iconUrl) {
+			super();
+			this.content = content;
+			this.time = time;
+			this.from = from;
+			this.iconUrl = iconUrl;
+		}
+		String content;
+		long time;
+		String from;
+		String iconUrl;
+		@Override
+		public int compareTo(BeanMessage o) {
+			if (this.time > o.time) {
+				return 1;
+			} else if (this.time == o.time) {
+				return 0;
+			} else {
+				return -1;
+			}
+		}
+		public Object getJSONObject() {
+			JSONObject message = new JSONObject();
+			message.put(PARAM_MSG_CONTENT, content);
+			message.put(PARAM_MSG_TIME, time);
+			message.put(PARAM_MSG_FROM, from);
+			message.put(PARAM_URL, iconUrl);
+			return message;
+		}
+	}
 
 	// group_id, session
 	private String receiveMessage(int groupId, String session) {
 		JSONObject result = new JSONObject();
 		result.put(RETURN_TYPE, 205);
 		JSONArray messageArray = new JSONArray();
+		ArrayList<BeanMessage> messageList = new ArrayList<BeanMessage>();
 
 		int userid = 0;
 		try {
@@ -1318,12 +1436,39 @@ public class TestServer {
 				if (resultSet.getInt("id") == userid) {
 					continue;
 				}
-				JSONObject message = new JSONObject();
-				message.put(PARAM_MSG_CONTENT, resultSet.getString("content"));
-				message.put(PARAM_MSG_TIME, resultSet.getLong("time"));
-				message.put(PARAM_MSG_FROM, resultSet.getString("username"));
-				message.put(PARAM_URL, resultSet.getString("icon_url"));
-				messageArray.add(message);
+				messageList.add(new BeanMessage(resultSet.getString("content"), resultSet.getLong("time"),
+						resultSet.getString("username"), resultSet.getString("icon_url")));
+			}
+			
+			resultSet.close();
+			preparedStatement.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			result.put(PARAM_MESSAGES, new JSONArray());
+			result.put(RETURN_ERROR, 300);
+			return result.toString();
+		}
+		
+		try {
+			String sql = "select `pic_message`.`url`, `pic_message`.`time`, `user`.`username`, `user`.`id`, `user_detail`.`icon_url` " +
+						 "from `pic_message`, `user`, `user_detail` " +
+						 "where `pic_message`.`group_id` = ? and " +
+						  	   "`pic_message`.`sender_id` = `user`.`id` and " +
+						  	   "`user`.`id` = `user_detail`.`user_id` and " +
+						  	   "`pic_message`.`time` > all " +
+						  	   		"(select `last_received_time` from `participation` where `group_id` = ? and `user_id` = ?);";
+			PreparedStatement preparedStatement = connection.prepareStatement(sql);
+			preparedStatement.setInt(1, groupId);
+			preparedStatement.setInt(2, groupId);
+			preparedStatement.setInt(3, userid);
+			
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				if (resultSet.getInt("id") == userid) {
+					continue;
+				}
+				messageList.add(new BeanMessage(resultSet.getString("url"), resultSet.getLong("time"),
+						resultSet.getString("username"), resultSet.getString("icon_url")));
 			}
 			
 			resultSet.close();
@@ -1360,6 +1505,10 @@ public class TestServer {
 			return result.toString();
 		}
 		
+		Collections.sort(messageList);
+		for (BeanMessage message : messageList) {
+			messageArray.add(message.getJSONObject());
+		}
 		result.put(PARAM_MESSAGES, messageArray);
 		result.put(RETURN_ERROR, 0);
 		return result.toString();

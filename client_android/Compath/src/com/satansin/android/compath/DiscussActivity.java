@@ -1,15 +1,15 @@
 package com.satansin.android.compath;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 
 import com.satansin.android.compath.logic.GroupParticipationService;
@@ -22,6 +22,9 @@ import com.satansin.android.compath.logic.NetworkTimeoutException;
 import com.satansin.android.compath.logic.NotLoginException;
 import com.satansin.android.compath.logic.ServiceFactory;
 import com.satansin.android.compath.logic.UnknownErrorException;
+import com.satansin.android.compath.logic.UploadService;
+import com.satansin.android.compath.qiniu.Conf;
+import com.satansin.android.compath.qiniu.JSONObjectRet;
 import com.satansin.android.compath.util.UITimeGenerator;
 
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -31,7 +34,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -53,36 +55,32 @@ public class DiscussActivity extends ActionBarActivity {
 	
 	private static final int HISTORY_PAGE_SIZE = 20;
 
-	private int groupId;
+	private int mGroupId;
 	
 	private EditText mInputEditText;
 	private ListView mListView;
 	private SwipeRefreshLayout mSwipeRefreshLayout;
-	private TextView headerTextView;
-	private ImageView sendButtonImageView;
-	private MenuItem favorMenuItem;
+	private TextView mHeaderTextView;
+	private ImageView mSendButtonImageView;
+	private MenuItem mFavorMenuItem;
 	
 	private Button loadpicBtn = null;
 	private Button cameraBtn = null;
 	
-	private HashMap<String, Bitmap> iconMaps;
+	private HashMap<String, Bitmap> mIconMaps;
 
-	private List<Message> messageList;
-	private MessageAdapter messageAdapter;
+	private List<Message> mMessageList;
+	private MessageAdapter mMessageAdapter;
 
-	private MessageService messageService = ServiceFactory.getMessageService();
-	private MemoryService memoryService;
+	private MessageService mMessageService = ServiceFactory.getMessageService();
+	private MemoryService mMemoryService;
 	
-	private ReceivingThread receivingThread;
-	
-	private boolean hasFavored = false;
-	private Uri outputFileUri = null; 
-    private static final int IMAGE_REQUEST_CODE = 1000;
-    private static final int CAMERA_REQUEST_CODE = 1001;
-	
-	private CancelFavorGroupTask cancelFavorGroupTask;
-	private CheckGroupFavoredTask checkGroupFavoredTask;
-	private FavorGroupTask favorGroupTask;
+	private ReceivingThread mReceivingThread;
+
+	private boolean mHasFavored = false;
+	private CancelFavorGroupTask mCancelFavorGroupTask;
+	private CheckGroupFavoredTask mCheckGroupFavoredTask;
+	private FavorGroupTask mFavorGroupTask;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -91,26 +89,26 @@ public class DiscussActivity extends ActionBarActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_discuss);
 		
-		memoryService = ServiceFactory.getMemoryService(this);
+		mMemoryService = ServiceFactory.getMemoryService(this);
 
 		if (!getIntent().hasExtra(EXTRA_DISCUSS_GROUP_ID)) {
 			Toast.makeText(getApplicationContext(), R.string.error_unknown_retry,
 					Toast.LENGTH_SHORT).show();
 			DiscussActivity.this.finish();
 		}
-		groupId = getIntent().getIntExtra(EXTRA_DISCUSS_GROUP_ID, 0);
+		mGroupId = getIntent().getIntExtra(EXTRA_DISCUSS_GROUP_ID, 0);
 		
-		iconMaps = new HashMap<String, Bitmap>();
+		mIconMaps = new HashMap<String, Bitmap>();
 		
-		messageList = new ArrayList<Message>();
+		mMessageList = new ArrayList<Message>();
 
 		mListView = (ListView) findViewById(R.id.discuss_list_view);
 		View headerView = getLayoutInflater().inflate(R.layout.header_discuss, null);
-		headerTextView = (TextView) headerView.findViewById(R.id.discuss_header_text);
+		mHeaderTextView = (TextView) headerView.findViewById(R.id.discuss_header_text);
 		mListView.addHeaderView(headerView);
 		
-		messageAdapter = new MessageAdapter(this);
-		mListView.setAdapter(messageAdapter);
+		mMessageAdapter = new MessageAdapter(this);
+		mListView.setAdapter(mMessageAdapter);
 		
 		mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe);
 		// 顶部刷新的样式 
@@ -123,11 +121,11 @@ public class DiscussActivity extends ActionBarActivity {
 			}
 		});
 
-		sendButtonImageView = (ImageView) findViewById(R.id.discuss_sending);
-		sendButtonImageView.setOnClickListener(new OnClickListener() {
+		mSendButtonImageView = (ImageView) findViewById(R.id.discuss_sending);
+		mSendButtonImageView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				attemptSending();
+				attemptSendingText();
 			}
 		});
 
@@ -144,9 +142,9 @@ public class DiscussActivity extends ActionBarActivity {
 			public void afterTextChanged(Editable s) {
 				String text = mInputEditText.getText().toString();
 				if (text.length() == 0) {
-					sendButtonImageView.setImageResource(R.drawable.send_disabled);
+					mSendButtonImageView.setImageResource(R.drawable.send_disabled);
 				} else {
-					sendButtonImageView.setImageResource(R.drawable.send);
+					mSendButtonImageView.setImageResource(R.drawable.send);
 				}
 			}
 		});
@@ -155,13 +153,10 @@ public class DiscussActivity extends ActionBarActivity {
 		
 		loadpicBtn = (Button) findViewById(R.id.loadpicBtn);
 		loadpicBtn.setOnClickListener(new OnClickListener() {
-			
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				loadpic();
 			}
-
 		});
 		
 		cameraBtn = (Button) findViewById(R.id.cameraBtn);
@@ -169,7 +164,6 @@ public class DiscussActivity extends ActionBarActivity {
 			
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				camera();
 			}
 		});
@@ -178,17 +172,17 @@ public class DiscussActivity extends ActionBarActivity {
 		
 		new CheckGroupFavoredTask().execute();
 
-		receivingThread = new ReceivingThread();
-		receivingThread.start();
+		mReceivingThread = new ReceivingThread();
+		mReceivingThread.start();
 
-		mListView.setSelection(messageList.size());
+		mListView.setSelection(mMessageList.size());
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.discuss, menu);
-		favorMenuItem = menu.findItem(R.id.action_favor);
+		mFavorMenuItem = menu.findItem(R.id.action_favor);
 		return true;
 	}
 
@@ -202,14 +196,14 @@ public class DiscussActivity extends ActionBarActivity {
 			if (favorOperationsProcessing()) {
 				return true;
 			}
-			if (hasFavored) {
+			if (mHasFavored) {
 				setFavorMenuState(true);
-				cancelFavorGroupTask = new CancelFavorGroupTask();
-				cancelFavorGroupTask.execute();
+				mCancelFavorGroupTask = new CancelFavorGroupTask();
+				mCancelFavorGroupTask.execute();
 			} else {
 				setFavorMenuState(false);
-				favorGroupTask = new FavorGroupTask();
-				favorGroupTask.execute();
+				mFavorGroupTask = new FavorGroupTask();
+				mFavorGroupTask.execute();
 			}
 			return true;
 		} else if (id == R.id.action_view_pics) {
@@ -224,21 +218,21 @@ public class DiscussActivity extends ActionBarActivity {
 	 */
 	private void setFavorMenuState(boolean toFavor) {
 		if (toFavor) {
-			favorMenuItem.setTitle(getString(R.string.action_favor));
-			favorMenuItem.setIcon(R.drawable.not_favored);
+			mFavorMenuItem.setTitle(getString(R.string.action_favor));
+			mFavorMenuItem.setIcon(R.drawable.not_favored);
 		} else {
-			favorMenuItem.setTitle(getString(R.string.action_cancel_favor));
-			favorMenuItem.setIcon(R.drawable.favored);
+			mFavorMenuItem.setTitle(getString(R.string.action_cancel_favor));
+			mFavorMenuItem.setIcon(R.drawable.favored);
 		}
 	}
 
 	private boolean favorOperationsProcessing() {
-		return (cancelFavorGroupTask != null || checkGroupFavoredTask != null || favorGroupTask != null);
+		return (mCancelFavorGroupTask != null || mCheckGroupFavoredTask != null || mFavorGroupTask != null);
 	}
 
 	@Override
 	public void finish() {
-		receivingThread.stopReceiving();
+		mReceivingThread.stopReceiving();
 		new ExitGroupTask().execute();
 		setResult(RESULT_OK);
 		super.finish();
@@ -252,16 +246,16 @@ public class DiscussActivity extends ActionBarActivity {
 	
 	private void loadHistoryMessages() {
 		try {
-			int currentSize = messageList.size();
-			List<Message> historyList = memoryService.
-					loadHistoryMessage(groupId, currentSize + 1, currentSize + HISTORY_PAGE_SIZE);
+			int currentSize = mMessageList.size();
+			List<Message> historyList = mMemoryService.
+					loadHistoryMessage(mGroupId, currentSize + 1, currentSize + HISTORY_PAGE_SIZE);
 			
 			mSwipeRefreshLayout.setRefreshing(false);
 			if (currentSize > 0 && historyList.size() <= 0) {
-				headerTextView.setText(getString(R.string.error_non_history_msg));
+				mHeaderTextView.setText(getString(R.string.error_non_history_msg));
 			}
 			for (Message message : historyList) {
-				messageList.add(0, message);
+				mMessageList.add(0, message);
 				new GetUsrIconTask(message.getIconUrl()).execute();
 			}
 		} catch (UnknownErrorException e) {
@@ -278,8 +272,8 @@ public class DiscussActivity extends ActionBarActivity {
 					break;
 				}
 				try {
-					newMessages = messageService
-							.receiveMessages(groupId, memoryService.getMySession());
+					newMessages = mMessageService
+							.receiveMessages(mGroupId, mMemoryService.getMySession());
 				} catch (Exception e) {
 				}
 				mListView.post(new Runnable() {
@@ -287,7 +281,7 @@ public class DiscussActivity extends ActionBarActivity {
 					public void run() {
 						for (Message message : newMessages) {
 							try {
-								message = memoryService.insertReceivedMessage(message, groupId);
+								message = mMemoryService.insertReceivedMessage(message, mGroupId);
 							} catch (UnknownErrorException e) {
 							}
 							if (message == null) {
@@ -312,36 +306,53 @@ public class DiscussActivity extends ActionBarActivity {
 			isReceiving = false;
 		}
 	}
+
+	private void appendMessageOnUI(Message newMessage, boolean rollToBottom) {
+		mMessageList.add(newMessage);
+		new GetUsrIconTask(newMessage.getIconUrl()).execute();
+		mMessageAdapter.notifyDataSetChanged();
+		if (rollToBottom) {
+			mListView.setSelection(mListView.getBottom());
+		}
+	}
 	
-	private void attemptSending() {
+	private void updateMessageOnUI(int messageId, boolean messageSent) {
+		for (int i = mMessageList.size() - 1; i >= 0; i--) {
+			if (mMessageList.get(i).getId() == messageId) {
+				if (messageSent) {
+					mMessageList.get(i).setSendingState(Message.STATE_SENT);
+				} else {
+					mMessageList.get(i).setSendingState(Message.STATE_FAILED);
+				}
+			}
+		}
+		mMessageAdapter.notifyDataSetChanged();
+	}
+	
+	private void attemptSendingText() {
+		// get the text in edit field
 		String text = mInputEditText.getText().toString();
 		if (text.length() == 0) {
 			return;
 		}
 		mInputEditText.setText("");
+		
+		// insert into file and get message object
 		Message message = null;
 		try {
-			message = memoryService.insertSendingMessage(text, groupId);
+			message = mMemoryService.insertSendingMessage(text, mGroupId, Message.TYPE_TEXT);
 		} catch (UnknownErrorException e) {
 		}
 		if (message == null) {
 			return;
 		}
+		
+		// show the message on ui
 		appendMessageOnUI(message, true);
 
-		SendMessageTask sendMessageTask = new SendMessageTask();
+		// start message sending task
+		SendTextMessageTask sendMessageTask = new SendTextMessageTask();
 		sendMessageTask.execute(message);
-
-		// TODO update sending status in SQLite
-	}
-
-	private void appendMessageOnUI(Message newMessage, boolean rollToBottom) {
-		messageList.add(newMessage);
-		new GetUsrIconTask(newMessage.getIconUrl()).execute();
-		messageAdapter.notifyDataSetChanged();
-		if (rollToBottom) {
-			mListView.setSelection(mListView.getBottom());
-		}
 	}
 	
 	private class MessageAdapter extends BaseAdapter {
@@ -365,12 +376,12 @@ public class DiscussActivity extends ActionBarActivity {
 
 		@Override
 		public int getCount() {
-			return messageList.size();
+			return mMessageList.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
-			return messageList.get(position);
+			return mMessageList.get(position);
 		}
 
 		@Override
@@ -421,7 +432,7 @@ public class DiscussActivity extends ActionBarActivity {
 //			}
 			viewHolder.contentTextView.setText(message.getContent());
 			
-			Bitmap iconBitmap = iconMaps.get(message.getIconUrl());
+			Bitmap iconBitmap = mIconMaps.get(message.getIconUrl());
 			if (iconBitmap != null) {
 				viewHolder.iconImageView.setImageBitmap(iconBitmap);
 			}
@@ -456,8 +467,8 @@ public class DiscussActivity extends ActionBarActivity {
 			if (result == null) {
 				return;
 			}
-			iconMaps.put(url, result);
-			messageAdapter.notifyDataSetChanged();
+			mIconMaps.put(url, result);
+			mMessageAdapter.notifyDataSetChanged();
 		}
 	}
 
@@ -469,7 +480,7 @@ public class DiscussActivity extends ActionBarActivity {
 			GroupParticipationService groupParticipationService = ServiceFactory.getGroupParticipationService();
 			boolean entered = false;
 			try {
-				entered = groupParticipationService.enter(groupId, memoryService.getMySession());
+				entered = groupParticipationService.enter(mGroupId, mMemoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
@@ -494,7 +505,7 @@ public class DiscussActivity extends ActionBarActivity {
 					return;
 				} else if (exception instanceof NotLoginException) {
 					try {
-						memoryService.clearSession();
+						mMemoryService.clearSession();
 					} catch (UnknownErrorException e) {
 					}
 					CompathApplication.getInstance().finishAllActivities();
@@ -511,21 +522,23 @@ public class DiscussActivity extends ActionBarActivity {
 		protected Void doInBackground(Void... params) {
 			GroupParticipationService groupParticipationService = ServiceFactory.getGroupParticipationService();
 			try {
-				groupParticipationService.exit(groupId, memoryService.getMySession());
+				groupParticipationService.exit(mGroupId, mMemoryService.getMySession());
 			} catch (Exception e) {
 			}
 			return ((Void) null);
 		}
 	}
 	
-	private class SendMessageTask extends AsyncTask<Message, Void, Boolean> {
+	private class SendTextMessageTask extends AsyncTask<Message, Void, Boolean> {
 		private Exception exception;
+		private int messageId;
 
 		@Override
 		protected Boolean doInBackground(Message... params) {
+			messageId = params[0].getId();
 			boolean sent = false;
 			try {
-				sent = messageService.sendMessage(params[0], memoryService.getMySession());
+				sent = mMessageService.sendMessage(params[0], mMemoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
@@ -539,18 +552,20 @@ public class DiscussActivity extends ActionBarActivity {
 		@Override
 		protected void onPostExecute(final Boolean success) {
 			if (exception != null) {
-				// TODO: show that the message is not sent
 				if (exception instanceof NotLoginException) {
 					try {
-						memoryService.clearSession();
+						mMemoryService.clearSession();
 					} catch (UnknownErrorException e) {
 					}
 					CompathApplication.getInstance().finishAllActivities();
 					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
 					startActivity(intent);
+				} else {
+					updateMessageOnUI(messageId, false);
 				}
 			}
-			// TODO: stop the animation
+			
+			updateMessageOnUI(messageId, success);
 		}
 	}
 
@@ -563,7 +578,7 @@ public class DiscussActivity extends ActionBarActivity {
 					.getMygroupsService();
 			boolean added = false;
 			try {
-				added = mygroupsService.favorGroup(groupId, memoryService.getMySession());
+				added = mygroupsService.favorGroup(mGroupId, mMemoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
@@ -576,7 +591,7 @@ public class DiscussActivity extends ActionBarActivity {
 
 		@Override
 		protected void onPostExecute(final Boolean success) {
-			favorGroupTask = null;
+			mFavorGroupTask = null;
 			
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
@@ -590,7 +605,7 @@ public class DiscussActivity extends ActionBarActivity {
 					return;
 				} else if (exception instanceof NotLoginException) {
 					try {
-						memoryService.clearSession();
+						mMemoryService.clearSession();
 					} catch (UnknownErrorException e) {
 					}
 					CompathApplication.getInstance().finishAllActivities();
@@ -603,7 +618,7 @@ public class DiscussActivity extends ActionBarActivity {
 				Toast.makeText(getApplicationContext(), R.string.success_favor,
 						Toast.LENGTH_SHORT).show();
 				setFavorMenuState(false);
-				DiscussActivity.this.hasFavored = true;
+				DiscussActivity.this.mHasFavored = true;
 			} else {
 				Toast.makeText(getApplicationContext(),
 						R.string.error_favor_fail_retry, Toast.LENGTH_SHORT).show();
@@ -620,7 +635,7 @@ public class DiscussActivity extends ActionBarActivity {
 					.getMygroupsService();
 			boolean cancelled = false;
 			try {
-				cancelled = mygroupsService.removeFromFavor(groupId, memoryService.getMySession());
+				cancelled = mygroupsService.removeFromFavor(mGroupId, mMemoryService.getMySession());
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
@@ -633,7 +648,7 @@ public class DiscussActivity extends ActionBarActivity {
 
 		@Override
 		protected void onPostExecute(final Boolean success) {
-			cancelFavorGroupTask = null;
+			mCancelFavorGroupTask = null;
 			
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
@@ -647,7 +662,7 @@ public class DiscussActivity extends ActionBarActivity {
 					return;
 				} else if (exception instanceof NotLoginException) {
 					try {
-						memoryService.clearSession();
+						mMemoryService.clearSession();
 					} catch (UnknownErrorException e) {
 					}
 					CompathApplication.getInstance().finishAllActivities();
@@ -659,8 +674,8 @@ public class DiscussActivity extends ActionBarActivity {
 			if (success) {
 				Toast.makeText(getApplicationContext(), R.string.success_cancel,
 						Toast.LENGTH_SHORT).show();
-				favorMenuItem.setTitle(getString(R.string.action_favor));
-				DiscussActivity.this.hasFavored = false;
+				mFavorMenuItem.setTitle(getString(R.string.action_favor));
+				DiscussActivity.this.mHasFavored = false;
 			} else {
 				Toast.makeText(getApplicationContext(),
 						R.string.error_cancel_fail_retry, Toast.LENGTH_SHORT).show();
@@ -674,7 +689,7 @@ public class DiscussActivity extends ActionBarActivity {
 			MygroupsService mygroupsService = ServiceFactory.getMygroupsService();
 			boolean hasFavored = false;
 			try {
-				hasFavored = mygroupsService.getGroupFavorStatus(groupId, memoryService.getMySession());
+				hasFavored = mygroupsService.getGroupFavorStatus(mGroupId, mMemoryService.getMySession());
 			} catch (Exception e) {
 			}
 			return hasFavored;
@@ -682,74 +697,198 @@ public class DiscussActivity extends ActionBarActivity {
 
 		@Override
 		protected void onPostExecute(final Boolean hasFavored) {
-			checkGroupFavoredTask = null;
+			mCheckGroupFavoredTask = null;
 			
 			if (hasFavored) {
 				setFavorMenuState(false);
 			}
-			DiscussActivity.this.hasFavored = hasFavored;
+			DiscussActivity.this.mHasFavored = hasFavored;
 		}
 	}
+	
+	private String capturedFileName;
+	
+	private void generateCapturedFileName() {
+		capturedFileName = new UITimeGenerator().getFormattedPhotoNameTime() + ".jpg";
+	}
 
+	private static final int REQUEST_CODE_IMAGE = 1;
+	private static final int REQUEST_CODE_CAPTURE = 2;
 	
 	private void loadpic(){
-		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);  
-        intent.addCategory(Intent.CATEGORY_OPENABLE);  
-        intent.setType("image/*");  
-        startActivityForResult(Intent.createChooser(intent, "选择图片"), 1000);  
+		Intent galleryIntent = new Intent(Intent.ACTION_PICK, null);
+		galleryIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+		startActivityForResult(galleryIntent, REQUEST_CODE_IMAGE);
 	}
 	
 	private void camera(){
-		File file = new File(Environment.getExternalStorageDirectory(), "textphoto.jpg");  
-        outputFileUri = Uri.fromFile(file);  
-
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);  
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);  
-        startActivityForResult(intent, 1001); 
+		Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+		generateCapturedFileName();
+		try {
+			captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, mMemoryService.getNewCapturingUri(capturedFileName));
+		} catch (UnknownErrorException e) {
+			Toast.makeText(getApplicationContext(), getString(R.string.error_non_storage), Toast.LENGTH_SHORT).show();
+			return;
+		}
+		startActivityForResult(captureIntent, REQUEST_CODE_CAPTURE);
 	}
 	
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {  
-        super.onActivityResult(requestCode, resultCode, data);  
-//    	private ImageView iv;  
-    	Bitmap bmp = null;  
-
-    	
-        if (requestCode == IMAGE_REQUEST_CODE) {  
-              
-            if(data == null){  
-                return;  
-            }  
-              
-            Uri uri = data.getData();  
-            String[] proj = { MediaStore.Images.Media.DATA };  
-            @SuppressWarnings("deprecation")
-			Cursor cursor = managedQuery(uri, proj, // Which  
-                                                                    // columns  
-                                                                    // to return  
-                    null, // WHERE clause; which rows to return (all rows)  
-                    null, // WHERE clause selection arguments (none)  
-                    null); // Order-by clause (ascending by name)  
-  
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);  
-            cursor.moveToFirst();  
-  
-            String path = cursor.getString(column_index);  
-  
-            if (bmp != null)// 如果不释放的话，不断取图片，将会内存不够  
-                bmp.recycle();  
-  
-            bmp = BitmapFactory.decodeFile(path);  
-            //TODO发送图片消息
-  
-        } else if (requestCode == CAMERA_REQUEST_CODE) {  
-            bmp = BitmapFactory.decodeFile(outputFileUri.getPath());  
-            //TODO发送图片消息
-        } else {  
-            Toast.makeText(this, "请重新选择图片", Toast.LENGTH_SHORT).show();  
-        }  
-  
-    }  
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_IMAGE && resultCode == RESULT_OK) {
+			Uri uri = data.getData();
+			if (uri == null) {
+				return;
+			}
+			attemptSendingPic(uri);
+		} else if (requestCode == REQUEST_CODE_CAPTURE && resultCode == RESULT_OK) {
+			try {
+				attemptSendingPic(mMemoryService.getNewCapturingUri(capturedFileName));
+			} catch (UnknownErrorException e) {
+				return;
+			}
+		}
+	}
 	
+	private void attemptSendingPic(Uri uri) {
+		// insert into file and get message object
+		Message message = null;
+		try {
+			message = mMemoryService.insertSendingMessage("", mGroupId, Message.TYPE_PIC);
+		} catch (UnknownErrorException e) {
+		}
+		if (message == null) {
+			return;
+		}
+		
+		// refresh ui
+		appendMessageOnUI(message, true);
+		
+		new GetPhotoUploadTokenTask(uri, message.getId()).execute();
+	}
+	
+	private class GetPhotoUploadTokenTask extends AsyncTask<Void, Void, String> {
+		private Exception exception;
+		private Uri uri;
+		private int messageId;
+		public GetPhotoUploadTokenTask(Uri uri, int messageId) {
+			this.uri = uri;
+			this.messageId = messageId;
+		}
+		@Override
+		protected String doInBackground(Void... params) {
+			String token = "";
+			try {
+				UploadService uploadService = ServiceFactory.getUploadService();
+				token = uploadService.photoUploadToken(mMemoryService.getMySession(), mGroupId);
+				if (token == null || token.length() <= 0) {
+					return "";
+				}
+				
+			} catch (NetworkTimeoutException e) {
+				exception = (NetworkTimeoutException) e;
+			} catch (UnknownErrorException e) {
+				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
+			}
+			return token;
+		}
+		@Override
+		protected void onPostExecute(String result) {
+			if (exception != null) {
+				if (exception instanceof NetworkTimeoutException) {
+					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
+					return;
+				} else if (exception instanceof UnknownErrorException) {
+					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
+					return;
+				} else if (exception instanceof NotLoginException) {
+					try {
+						ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					} catch (UnknownErrorException e) {
+					}
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
+					startActivity(intent);
+				}
+			}
+			
+			if (result != null && result.length() != 0) {
+				executeUpload(result, uri, messageId);
+			} else {
+				Toast.makeText(getApplicationContext(), R.string.error_send_fail, Toast.LENGTH_SHORT).show();
+			}
+		}
+	}
+	
+	private void executeUpload(String token, Uri uri, final int messageId) {
+		ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
+		try {
+			imageService.uploadBitmap(getApplicationContext(), token, uri, new JSONObjectRet() {
+				@Override
+				public void onFailure(Exception ex) {
+					Toast.makeText(getApplicationContext(), R.string.error_send_fail, Toast.LENGTH_SHORT).show();
+				}
+				@Override
+				public void onSuccess(JSONObject obj) {
+					String uploadedUrl = null;
+					try {
+						uploadedUrl = Conf.SERVER_DOMAIN + obj.getString("hash");
+					} catch (JSONException e) {
+						Toast.makeText(getApplicationContext(), R.string.error_send_fail, Toast.LENGTH_SHORT).show();
+					}
+					if (uploadedUrl == null || uploadedUrl.length() == 0) {
+						Toast.makeText(getApplicationContext(), R.string.error_send_fail, Toast.LENGTH_SHORT).show();
+					}
+					new UpdatePicTask(messageId).execute(uploadedUrl);
+				}
+			});
+		} catch (Exception e) {
+			Toast.makeText(getApplicationContext(), R.string.error_send_fail, Toast.LENGTH_SHORT).show();
+		}
+	}
+	
+	private class UpdatePicTask extends AsyncTask<String, Void, Boolean> {
+		private Exception exception;
+		private int messageId;
+		public UpdatePicTask(int messageId) {
+			this.messageId = messageId;
+		}
+		@Override
+		protected Boolean doInBackground(String... params) {
+			try {
+				UploadService uploadService = ServiceFactory.getUploadService();
+				
+				return uploadService.photoUpdate(mMemoryService.getMySession(), mGroupId, params[0]);
+			} catch (NetworkTimeoutException e) {
+				exception = (NetworkTimeoutException) e;
+			} catch (UnknownErrorException e) {
+				exception = (UnknownErrorException) e;
+			} catch (NotLoginException e) {
+				exception = (NotLoginException) e;
+			}
+			return false;
+		}
+		@Override
+		protected void onPostExecute(Boolean result) {
+			if (exception != null) {
+				if (exception instanceof NotLoginException) {
+					try {
+						ServiceFactory.getMemoryService(getApplicationContext()).clearSession();
+					} catch (UnknownErrorException e) {
+					}
+					CompathApplication.getInstance().finishAllActivities();
+					Intent intent = new Intent(DiscussActivity.this, LoginActivity.class);
+					startActivity(intent);
+				} else {
+					updateMessageOnUI(messageId, false);
+				}
+			}
+			
+			updateMessageOnUI(messageId, result);
+		}
+	}
 	
 }

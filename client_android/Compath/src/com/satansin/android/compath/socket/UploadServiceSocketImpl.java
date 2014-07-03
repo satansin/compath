@@ -17,11 +17,11 @@ public class UploadServiceSocketImpl implements UploadService {
 	}
 
 	@Override
-	public String photoUploadToken(String session, int locationId) throws UnknownErrorException, NetworkTimeoutException, NotLoginException {
+	public String photoUploadToken(String session, int groupId) throws UnknownErrorException, NetworkTimeoutException, NotLoginException {
 		SocketMsg msg = new SocketMsg(SocketMsg.ASK_FOR_UPLOAD_TOKEN);
 		msg.putInt(SocketMsg.PARAM_ACTION, SocketMsg.ACTION_PHOTO);
 		msg.putString(SocketMsg.PARAM_SESSION, session);
-		msg.putInt(SocketMsg.PARAM_LOCATION_ID, locationId);
+		msg.putInt(SocketMsg.PARAM_GROUP_ID, groupId);
 		return getToken(msg);
 	}
 	
@@ -65,14 +65,14 @@ public class UploadServiceSocketImpl implements UploadService {
 	}
 
 	@Override
-	public boolean photoUpdate(String session, int locationId, String url)
+	public boolean photoUpdate(String session, int groupId, String url)
 			throws UnknownErrorException, NotLoginException,
 			NetworkTimeoutException {
 		SocketMsg msg = new SocketMsg(SocketMsg.ASK_FOR_IMAGE_UPDATE);
 		msg.putInt(SocketMsg.PARAM_ACTION, SocketMsg.ACTION_PHOTO);
 		msg.putString(SocketMsg.PARAM_SESSION, session);
 		msg.putString(SocketMsg.PARAM_URL, url);
-		msg.putInt(SocketMsg.PARAM_LOCATION_ID, locationId);
+		msg.putInt(SocketMsg.PARAM_GROUP_ID, groupId);
 		return imageUpdate(msg);
 	}
 	

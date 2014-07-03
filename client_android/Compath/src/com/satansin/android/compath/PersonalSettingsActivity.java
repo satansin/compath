@@ -62,7 +62,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 //    /*Í·ÏñÃû³Æ*/
 //    private static final String IMAGE_FILE_NAME = "faceImage.jpg";
 	
-	private UploadMyIconTask uploadMyIconTask;
+	private GetMyIconUploadTokenTask uploadMyIconTask;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -307,14 +307,14 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			} catch (UnknownErrorException e) {
 				return;
 			}
-			new UploadMyIconTask(croppedUri).execute();
+			new GetMyIconUploadTokenTask(croppedUri).execute();
 		}
 	}
 	
-	private class UploadMyIconTask extends AsyncTask<Void, Void, String> {
+	private class GetMyIconUploadTokenTask extends AsyncTask<Void, Void, String> {
 		private Exception exception;
 		private Uri uri;
-		public UploadMyIconTask(Uri uri) {
+		public GetMyIconUploadTokenTask(Uri uri) {
 			this.uri = uri;
 		}
 		@Override

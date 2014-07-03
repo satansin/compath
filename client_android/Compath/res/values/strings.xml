@@ -48,6 +48,7 @@
     <string name="error_set_fail_retry">设置失败，请重试</string>
     <string name="error_cancel_fail_retry">操作失败，请重试</string>
     <string name="error_update_fail">修改失败</string>
+    <string name="error_send_fail">发送失败</string>
     <string name="error_unknown_retry">出现未知错误，请重试</string>
     <string name="error_unknown">出现未知错误</string>
     <string name="error_network_timeout">请检查网络连接</string>

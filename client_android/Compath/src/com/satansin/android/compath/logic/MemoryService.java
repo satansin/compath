@@ -34,9 +34,11 @@ public interface MemoryService {
 	@Deprecated
 	public boolean saveHistoryMessage(int groupId);
 
-	public Message insertSendingMessage(String text, int groupId) throws UnknownErrorException;
+	public Message insertSendingMessage(String text, int groupId, int type) throws UnknownErrorException;
 
 	public Message insertReceivedMessage(Message message, int groupId) throws UnknownErrorException;
+	
+	public boolean setMessageSent(int messageId, boolean messageSent, String url) throws UnknownErrorException;
 
 	public String getMyUsrname();
 
