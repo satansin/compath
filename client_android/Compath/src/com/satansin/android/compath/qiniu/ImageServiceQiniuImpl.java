@@ -32,7 +32,9 @@ public class ImageServiceQiniuImpl implements ImageService {
 		case THUMB_ICON_DISCUSS:
 			return MemoryService.IMG_THUMB_L;
 		case THUMB_ICON_PERSONAL_SETTINGS:
-			return MemoryService.IMG_THUMB_L;
+			return MemoryService.IMG_THUMB_H;
+		case THUMB_GALLERY:
+			return MemoryService.IMG_THUMB_H;
 		default:
 			return 0;
 		}
@@ -48,6 +50,8 @@ public class ImageServiceQiniuImpl implements ImageService {
 			return "?imageView2/1/w/60/h/60";
 		case THUMB_ICON_PERSONAL_SETTINGS:
 			return "?imageView2/1/w/96/h/96";
+		case THUMB_GALLERY:
+			// TODO
 		default:
 			return "";
 		}

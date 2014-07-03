@@ -12,6 +12,7 @@ public interface ImageService {
 	public static final int ORIGIN = 2;
 	public static final int THUMB_ICON_DISCUSS = 3;
 	public static final int THUMB_ICON_PERSONAL_SETTINGS = 4;
+	public static final int THUMB_GALLERY = 5;
 
 	public Bitmap getBitmap(String url, int type);
 	

@@ -171,6 +171,8 @@ public class SocketMsg {
 	 * 		 "number_of_members":"53",
 	 * 		 "location_name":"Street No 5"},
 	 * 		...(没有feed数组长度0)],
+	 * 	"location":{
+	 * 		"id"...}
 	 * 	"error":"300"}
 	 */
 	public static final int RE_FEED = 202;
