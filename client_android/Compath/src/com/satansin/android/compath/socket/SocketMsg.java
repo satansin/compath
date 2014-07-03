@@ -152,6 +152,11 @@ public class SocketMsg {
 	 * 	"longitude":"118273643"}
 	 */
 	public static final int ASK_FOR_LOCATIONS = 123;
+	/**
+	 * {"opcode":"124",
+	 * 	"group_id":"2321"}
+	 */
+	public static final int ASK_FOR_GROUP_PICS = 124;
 	
 	// return type codes
 	/**
@@ -343,6 +348,7 @@ public class SocketMsg {
 	 * 	"error":"300/302"}
 	 */
 	public static final int RE_LOCATIONS = 223;
+	public static final int RE_GROUP_PICS = 224;
 	
 	public static final int ERROR_UNKNOWN = 300;
 	public static final int ERROR_USRNAME_PASSWD_NOT_MATCHED = 301;
@@ -361,6 +367,7 @@ public class SocketMsg {
 	public static final String PARAM_ACTION = "a";
 	public static final String PARAM_URL = "ur";
 	public static final String PARAM_LOCATIONS = "ls";
+	public static final String PARAM_URLS = "us";
 	
 	public static final String PARAM_SENT = "sn";
 	public static final String PARAM_FAVORED = "f";
