@@ -28,12 +28,12 @@ import com.satansin.android.compath.util.UITimeGenerator;
 
 import android.app.AlertDialog.Builder;
 import android.util.Log;
-
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,14 +42,18 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 
 	public static final String EXTRA_PERSONAL_SETTINGS_CITY_ID = "com.satansin.android.compath.MSG_PERSONAL_SETTINGS_CITY";
 	public static final String EXTRA_LOGOUT = "com.satansin.android.compath.MSG_LOGOUT";
+	
+	private static final int PROGRESS_BAR_MAX = 100;
 
-	private int cityId = 0;
-	private String iconUrl = "";
+	private int mCityId = 0;
+	private String mIconUrl = "";
+	private Bitmap mIconBitmap;
 
 	private MemoryService memoryService;
 
 	private TextView cityTextView;
 	private ImageView iconImageView;
+	private ProgressBar progressBar;
 	
 	// version Jin
 //	private Button changeHeadBtn = null;
@@ -88,30 +92,20 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		iconImageView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-//<<<<<<< HEAD version: Jin
-//				// TODO 跳转到大图查看页面
-//				startActivity(new Intent(PersonalSettingsActivity.this,ImageShower.class));
-//=======
+				if (mIconBitmap == null) {
+					return;
+				}
 				Intent toImageViewIntent = new Intent(PersonalSettingsActivity.this, ImageViewActivity.class);
-				iconImageView.setDrawingCacheEnabled(true);
-				toImageViewIntent.putExtra(ImageViewActivity.EXTRA_THUMBNAIL, iconImageView.getDrawingCache());
-				toImageViewIntent.putExtra(ImageViewActivity.EXTRA_URL, iconUrl);
+				toImageViewIntent.putExtra(ImageViewActivity.EXTRA_THUMBNAIL, mIconBitmap);
+				toImageViewIntent.putExtra(ImageViewActivity.EXTRA_URL, mIconUrl);
 				startActivity(toImageViewIntent);
 			}
 		});
 		
-		// version: Jin
-//		changeHeadBtn = (Button) findViewById(R.id.change_head_btn);
-//		changeHeadBtn.setOnClickListener(new OnClickListener() {
-//			
-//			@Override
-//			public void onClick(View v) {
-//				// TODO Auto-generated method stub
-//				//更换头像
-//				showDialog();
-//			}
-//		});
-
+		progressBar = (ProgressBar) findViewById(R.id.personal_settings_progress_bar);
+		progressBar.setVisibility(View.GONE);
+		progressBar.setMax(PROGRESS_BAR_MAX);
+		
 		new GetMyIconUrlTask().execute();
 
 		RelativeLayout mygroupsRelativeLayout = (RelativeLayout) findViewById(R.id.mygroups_relative_layout);
@@ -236,7 +230,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		toCitySelectionIntent.putExtra(
 				CitySelectionActivity.EXTRA_START_FROM_PERSONAL_SETTINGS, true);
 		toCitySelectionIntent.putExtra(
-				CitySelectionActivity.EXTRA_CITY_ID, cityId);
+				CitySelectionActivity.EXTRA_CITY_ID, mCityId);
 		startActivityForResult(toCitySelectionIntent, REQUEST_CODE_CITY);
 	}
 
@@ -275,9 +269,9 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == REQUEST_CODE_CITY && resultCode == RESULT_OK) {
 			if (data.hasExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID)) {
-				cityId = data.getIntExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID, 0);
+				mCityId = data.getIntExtra(EXTRA_PERSONAL_SETTINGS_CITY_ID, 0);
 				try {
-					((TextView) findViewById(R.id.personal_settings_city)).setText(memoryService.getCityName(cityId));
+					((TextView) findViewById(R.id.personal_settings_city)).setText(memoryService.getCityName(mCityId));
 				} catch (UnknownErrorException e) {
 				}
 			}
@@ -307,8 +301,15 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			} catch (UnknownErrorException e) {
 				return;
 			}
+			progressBar.setVisibility(View.VISIBLE);
+			progressBar.setProgress(0);
 			new GetMyIconUploadTokenTask(croppedUri).execute();
 		}
+	}
+	
+	private void finishIconUpload(int toastStringResId) {
+		progressBar.setVisibility(View.GONE);
+		Toast.makeText(getApplicationContext(), toastStringResId, Toast.LENGTH_SHORT).show();
 	}
 	
 	private class GetMyIconUploadTokenTask extends AsyncTask<Void, Void, String> {
@@ -341,10 +342,10 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			uploadMyIconTask = null;
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
-					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
+					finishIconUpload(R.string.error_network_timeout);
 					return;
 				} else if (exception instanceof UnknownErrorException) {
-					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
+					finishIconUpload(R.string.error_unknown_retry);
 					return;
 				} else if (exception instanceof NotLoginException) {
 					try {
@@ -360,7 +361,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			if (result != null && result.length() != 0) {
 				executeUpload(result, uri);
 			} else {
-				Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+				finishIconUpload(R.string.error_update_fail);
 			}
 		}
 	}
@@ -371,7 +372,11 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			imageService.uploadBitmap(getApplicationContext(), token, uri, new JSONObjectRet() {
 				@Override
 				public void onFailure(Exception ex) {
-					Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+					finishIconUpload(R.string.error_update_fail);
+				}
+				@Override
+				public void onProcess(long current, long total) {
+					progressBar.setProgress((int)(((double)current / total) * PROGRESS_BAR_MAX));
 				}
 				@Override
 				public void onSuccess(JSONObject obj) {
@@ -379,16 +384,16 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 					try {
 						uploadedUrl = Conf.SERVER_DOMAIN + obj.getString("hash");
 					} catch (JSONException e) {
-						Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+						finishIconUpload(R.string.error_update_fail);
 					}
 					if (uploadedUrl == null || uploadedUrl.length() == 0) {
-						Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+						finishIconUpload(R.string.error_update_fail);
 					}
 					new UpdateIconTask().execute(uploadedUrl);
 				}
 			});
 		} catch (Exception e) {
-			Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+			finishIconUpload(R.string.error_update_fail);
 		}
 	}
 	
@@ -415,10 +420,10 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		protected void onPostExecute(Boolean result) {
 			if (exception != null) {
 				if (exception instanceof NetworkTimeoutException) {
-					Toast.makeText(getApplicationContext(), R.string.error_network_timeout, Toast.LENGTH_SHORT).show();
+					finishIconUpload(R.string.error_network_timeout);
 					return;
 				} else if (exception instanceof UnknownErrorException) {
-					Toast.makeText(getApplicationContext(), R.string.error_unknown_retry, Toast.LENGTH_SHORT).show();
+					finishIconUpload(R.string.error_unknown_retry);
 					return;
 				} else if (exception instanceof NotLoginException) {
 					try {
@@ -432,14 +437,14 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			}
 			
 			if (result) {
-				Toast.makeText(getApplicationContext(), R.string.success_update, Toast.LENGTH_SHORT).show();
+				finishIconUpload(R.string.success_update);
 				new GetMyIconUrlTask().execute();
 				try {
 					memoryService.updateUsrIcon(url);
 				} catch (UnknownErrorException e) {
 				}
 			} else {
-				Toast.makeText(getApplicationContext(), R.string.error_update_fail, Toast.LENGTH_SHORT).show();
+				finishIconUpload(R.string.error_update_fail);
 			}
 		}
 		
@@ -475,7 +480,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 			PersonalSettingsService personalSettingsService = ServiceFactory
 					.getPersonalSettingsService();
 			try {
-				iconUrl = personalSettingsService.getMyIconUrl(memoryService
+				mIconUrl = personalSettingsService.getMyIconUrl(memoryService
 						.getMySession());
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -493,12 +498,13 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 		@Override
 		protected Bitmap doInBackground(Void... params) {
 			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-			return imageService.getBitmap(iconUrl, ImageService.THUMB_ICON_PERSONAL_SETTINGS);
+			return imageService.getBitmap(mIconUrl, ImageService.THUMB_ICON_PERSONAL_SETTINGS);
 		}
 
 		@Override
 		protected void onPostExecute(Bitmap result) {
 			if (result != null) {
+				mIconBitmap = result;
 				iconImageView.setImageBitmap(result);
 			}
 		}
@@ -550,7 +556,7 @@ public class PersonalSettingsActivity extends ActionBarActivity {
 				}
 			}
 
-			PersonalSettingsActivity.this.cityId = result;
+			PersonalSettingsActivity.this.mCityId = result;
 			try {
 				cityTextView.setText(memoryService.getCityName(result));
 			} catch (UnknownErrorException e) {

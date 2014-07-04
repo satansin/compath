@@ -7,8 +7,6 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 
 public class IO {
@@ -86,17 +84,17 @@ public class IO {
 	 */
 	public void putFile(Context mContext, String key, Uri uri, PutExtra extra, final JSONObjectRet ret) {
 		if (!uri.toString().startsWith("file")) uri = convertFileUri(mContext, uri);
-		try {
-			File file = new File(new URI(uri.toString()));
+//		try {
+			File file = new File(uri.getPath());
 			if (file.exists()) {
 				putAndClose(key, InputStreamAt.fromFile(file), extra, ret);
 				return;
 			}
 			ret.onFailure(new Exception("file not exist: " + uri.toString()));
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			ret.onFailure(e);
-		}
+//		} catch (URISyntaxException e) {
+//			e.printStackTrace();
+//			ret.onFailure(e);
+//		}
 	}
 	public void putFile(String key, File file, PutExtra extra, JSONObjectRet callback) {
 		putAndClose(key, InputStreamAt.fromFile(file), extra, callback);

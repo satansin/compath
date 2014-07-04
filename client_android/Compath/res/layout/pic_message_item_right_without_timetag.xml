@@ -11,16 +11,14 @@
         android:layout_alignParentTop="true"
 		android:background="#eee" />
     
-    <TextView
-        android:id="@+id/message_item_content"
+    <ImageView
+        android:id="@+id/message_item_pic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@+id/message_item_icon"
         android:layout_toLeftOf="@+id/message_item_icon"
         android:layout_toRightOf="@+id/message_item_progress_bar"
-        android:gravity="right"
-        android:padding="8dp"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:padding="8dp" />
     
     <LinearLayout
         android:layout_width="fill_parent"

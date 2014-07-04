@@ -426,7 +426,7 @@ public class TestServer {
 				String msgContent = inputJson.getString(PARAM_URL);
 				long time = Calendar.getInstance().getTimeInMillis();
 				
-				String sql = "insert into `pic_message` (`content`, `time`, `group_id`, `sender_id`) values(?, ?, ?, ?);";
+				String sql = "insert into `pic_message` (`url`, `time`, `group_id`, `sender_id`) values(?, ?, ?, ?);";
 				PreparedStatement preparedStatement = connection.prepareStatement(sql);
 				preparedStatement.setString(1, msgContent);
 				preparedStatement.setLong(2, time);

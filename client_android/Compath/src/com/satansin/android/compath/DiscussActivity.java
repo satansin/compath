@@ -46,6 +46,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -67,7 +68,7 @@ public class DiscussActivity extends ActionBarActivity {
 	private Button loadpicBtn = null;
 	private Button cameraBtn = null;
 	
-	private HashMap<String, Bitmap> mIconMaps;
+	private HashMap<String, Bitmap> mImageMaps;
 
 	private List<Message> mMessageList;
 	private MessageAdapter mMessageAdapter;
@@ -98,7 +99,7 @@ public class DiscussActivity extends ActionBarActivity {
 		}
 		mGroupId = getIntent().getIntExtra(EXTRA_DISCUSS_GROUP_ID, 0);
 		
-		mIconMaps = new HashMap<String, Bitmap>();
+		mImageMaps = new HashMap<String, Bitmap>();
 		
 		mMessageList = new ArrayList<Message>();
 
@@ -256,7 +257,10 @@ public class DiscussActivity extends ActionBarActivity {
 			}
 			for (Message message : historyList) {
 				mMessageList.add(0, message);
-				new GetUsrIconTask(message.getIconUrl()).execute();
+				new GetImageTask(message.getIconUrl(), ImageService.THUMB_ICON_DISCUSS).execute();
+				if (message.getType() == Message.TYPE_PIC) {
+					new GetImageTask(message.getContent(), ImageService.THUMB_PIC_DISCUSS).execute();
+				}
 			}
 		} catch (UnknownErrorException e) {
 		}
@@ -309,7 +313,10 @@ public class DiscussActivity extends ActionBarActivity {
 
 	private void appendMessageOnUI(Message newMessage, boolean rollToBottom) {
 		mMessageList.add(newMessage);
-		new GetUsrIconTask(newMessage.getIconUrl()).execute();
+		new GetImageTask(newMessage.getIconUrl(), ImageService.THUMB_ICON_DISCUSS).execute();
+		if (newMessage.getType() == Message.TYPE_PIC) {
+			new GetImageTask(newMessage.getContent(), ImageService.THUMB_PIC_DISCUSS).execute();
+		}
 		mMessageAdapter.notifyDataSetChanged();
 		if (rollToBottom) {
 			mListView.setSelection(mListView.getBottom());
@@ -321,6 +328,20 @@ public class DiscussActivity extends ActionBarActivity {
 			if (mMessageList.get(i).getId() == messageId) {
 				if (messageSent) {
 					mMessageList.get(i).setSendingState(Message.STATE_SENT);
+				} else {
+					mMessageList.get(i).setSendingState(Message.STATE_FAILED);
+				}
+			}
+		}
+		mMessageAdapter.notifyDataSetChanged();
+	}
+	
+	private void updateMessageOnUI(int messageId, boolean messageSent, String url) {
+		for (int i = mMessageList.size() - 1; i >= 0; i--) {
+			if (mMessageList.get(i).getId() == messageId) {
+				if (messageSent) {
+					mMessageList.get(i).setSendingState(Message.STATE_SENT);
+					mMessageList.get(i).setContent(url);
 				} else {
 					mMessageList.get(i).setSendingState(Message.STATE_FAILED);
 				}
@@ -366,8 +387,9 @@ public class DiscussActivity extends ActionBarActivity {
 		private class ViewHolder {
 			public TextView timeTextView;
 			public ImageView iconImageView;
-//			public TextView usrnameTextView;
 			public TextView contentTextView;
+			public ProgressBar progressBar;
+			public ImageView picImageView;
 		}
 
 		public MessageAdapter(Context context) {
@@ -388,6 +410,35 @@ public class DiscussActivity extends ActionBarActivity {
 		public long getItemId(int position) {
 			return position;
 		}
+		
+		private int getConvertView(Message msg, boolean showTimeTag) {
+			int[] layoutIds = new int[] {
+					R.layout.message_item_left_with_timetag,
+					R.layout.message_item_left_without_timetag,
+					R.layout.message_item_right_with_timetag,
+					R.layout.message_item_right_without_timetag,
+					R.layout.pic_message_item_left_with_timetag,
+					R.layout.pic_message_item_left_without_timetag,
+					R.layout.pic_message_item_right_with_timetag,
+					R.layout.pic_message_item_right_without_timetag
+			};
+			switch (msg.getType()) {
+			case Message.TYPE_TEXT:
+				if (msg.isComingMsg()) {
+					return showTimeTag ? layoutIds[0] : layoutIds[1];
+				} else {
+					return showTimeTag ? layoutIds[2] : layoutIds[3];
+				}
+			case Message.TYPE_PIC:
+				if (msg.isComingMsg()) {
+					return showTimeTag ? layoutIds[4] : layoutIds[5];
+				} else {
+					return showTimeTag ? layoutIds[6] : layoutIds[7];
+				}
+			default:
+				return 0;
+			}
+		}
 
 		@Override
 		public View getView(final int position, View convertView, ViewGroup parent) {
@@ -400,74 +451,97 @@ public class DiscussActivity extends ActionBarActivity {
 				}
 			}
 
-			if (message.isComingMsg()) {
-				convertView = showTimeTag ? inflater.inflate(
-						R.layout.message_item_left_with_timetag, null)
-						: inflater.inflate(
-								R.layout.message_item_left_without_timetag,
-								null);
-			} else {
-				convertView = showTimeTag ? inflater.inflate(
-						R.layout.message_item_right_with_timetag, null)
-						: inflater.inflate(
-								R.layout.message_item_right_without_timetag,
-								null);
+			int viewId = getConvertView(message, showTimeTag);
+			if (viewId == 0) {
+				return convertView;
 			}
+			
+			convertView = inflater.inflate(getConvertView(message, showTimeTag), null);
 			viewHolder = new ViewHolder();
 			viewHolder.timeTextView = (TextView) convertView
 					.findViewById(R.id.message_item_time);
 			viewHolder.iconImageView = (ImageView) convertView
 					.findViewById(R.id.message_item_icon);
-//			viewHolder.usrnameTextView = (TextView) convertView
-//					.findViewById(R.id.message_item_usrname);
 			viewHolder.contentTextView = (TextView) convertView
 					.findViewById(R.id.message_item_content);
+			viewHolder.progressBar = (ProgressBar) convertView
+					.findViewById(R.id.message_item_progress_bar);
+			viewHolder.picImageView = (ImageView) convertView
+					.findViewById(R.id.message_item_pic);
 			convertView.setTag(viewHolder);
 
 			if (showTimeTag) {
 				viewHolder.timeTextView.setText(new UITimeGenerator().getFormattedMessageTime(message.getTime()));
 			}
-//			if (message.isComingMsg()) {
-//				viewHolder.usrnameTextView.setText(message.getFrom());
-//			}
-			viewHolder.contentTextView.setText(message.getContent());
 			
-			Bitmap iconBitmap = mIconMaps.get(message.getIconUrl());
+			if (message.getType() == Message.TYPE_TEXT) {
+				viewHolder.contentTextView.setText(message.getContent());
+				if (message.isComingMsg() == true && message.getSendingState() == Message.STATE_SENDING) {
+					viewHolder.progressBar.setVisibility(View.VISIBLE);
+				} else {
+					viewHolder.progressBar.setVisibility(View.GONE);
+				}
+			} else if (message.getType() == Message.TYPE_PIC) {
+				final Bitmap picBitmap = mImageMaps.get(message.getContent());
+				if (picBitmap != null) {
+					viewHolder.picImageView.setImageBitmap(picBitmap);
+					viewHolder.picImageView.setOnClickListener(new OnClickListener() {
+						@Override
+						public void onClick(View v) {
+							startImageView(picBitmap, ((Message) getItem(position)).getContent());
+						}
+					});
+					if (message.isComingMsg() == true && message.getSendingState() == Message.STATE_SENDING) {
+						viewHolder.progressBar.setVisibility(View.VISIBLE);
+					} else {
+						viewHolder.progressBar.setVisibility(View.GONE);
+					}
+				} else {
+					viewHolder.progressBar.setVisibility(View.VISIBLE);
+				}
+			}
+			
+			final Bitmap iconBitmap = mImageMaps.get(message.getIconUrl());
 			if (iconBitmap != null) {
 				viewHolder.iconImageView.setImageBitmap(iconBitmap);
+				viewHolder.iconImageView.setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						startImageView(iconBitmap, ((Message) getItem(position)).getIconUrl());
+					}
+				});
 			}
-			viewHolder.iconImageView.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					Intent toImageViewIntent = new Intent(DiscussActivity.this, ImageViewActivity.class);
-					viewHolder.iconImageView.setDrawingCacheEnabled(true);
-					toImageViewIntent.putExtra(ImageViewActivity.EXTRA_THUMBNAIL, viewHolder.iconImageView.getDrawingCache());
-					toImageViewIntent.putExtra(ImageViewActivity.EXTRA_URL, ((Message) getItem(position)).getIconUrl());
-					startActivity(toImageViewIntent);
-				}
-			});
 
 			return convertView;
 		}
 
 	}
 	
-	private class GetUsrIconTask extends AsyncTask<Void, Void, Bitmap> {
+	private void startImageView(Bitmap thumb, String url) {
+		Intent toImageViewIntent = new Intent(DiscussActivity.this, ImageViewActivity.class);
+		toImageViewIntent.putExtra(ImageViewActivity.EXTRA_THUMBNAIL, thumb);
+		toImageViewIntent.putExtra(ImageViewActivity.EXTRA_URL, url);
+		startActivity(toImageViewIntent);
+	}
+	
+	private class GetImageTask extends AsyncTask<Void, Void, Bitmap> {
 		private String url;
-		public GetUsrIconTask(String url) {
+		private int imageType;
+		public GetImageTask(String url, int imageType) {
 			this.url = url;
+			this.imageType = imageType;
 		}
 		@Override
 		protected Bitmap doInBackground(Void... params) {
 			ImageService imageService = ServiceFactory.getImageService(getApplicationContext());
-			return imageService.getBitmap(url, ImageService.THUMB_ICON_DISCUSS);
+			return imageService.getBitmap(url, imageType);
 		}
 		@Override
 		protected void onPostExecute(Bitmap result) {
 			if (result == null) {
 				return;
 			}
-			mIconMaps.put(url, result);
+			mImageMaps.put(url, result);
 			mMessageAdapter.notifyDataSetChanged();
 		}
 	}
@@ -564,7 +638,12 @@ public class DiscussActivity extends ActionBarActivity {
 					updateMessageOnUI(messageId, false);
 				}
 			}
-			
+
+			try {
+				mMemoryService.setMessageSent(messageId, true, "");
+			} catch (UnknownErrorException e) {
+				updateMessageOnUI(messageId, false);
+			}
 			updateMessageOnUI(messageId, success);
 		}
 	}
@@ -853,15 +932,17 @@ public class DiscussActivity extends ActionBarActivity {
 	private class UpdatePicTask extends AsyncTask<String, Void, Boolean> {
 		private Exception exception;
 		private int messageId;
+		private String picUrl;
 		public UpdatePicTask(int messageId) {
 			this.messageId = messageId;
 		}
 		@Override
 		protected Boolean doInBackground(String... params) {
+			this.picUrl = params[0];
 			try {
 				UploadService uploadService = ServiceFactory.getUploadService();
 				
-				return uploadService.photoUpdate(mMemoryService.getMySession(), mGroupId, params[0]);
+				return uploadService.photoUpdate(mMemoryService.getMySession(), mGroupId, picUrl);
 			} catch (NetworkTimeoutException e) {
 				exception = (NetworkTimeoutException) e;
 			} catch (UnknownErrorException e) {
@@ -887,7 +968,13 @@ public class DiscussActivity extends ActionBarActivity {
 				}
 			}
 			
-			updateMessageOnUI(messageId, result);
+			try {
+				mMemoryService.setMessageSent(messageId, true, picUrl);
+			} catch (UnknownErrorException e) {
+				updateMessageOnUI(messageId, false);
+			}
+			updateMessageOnUI(messageId, result, picUrl);
+			new GetImageTask(picUrl, ImageService.THUMB_PIC_DISCUSS).execute();
 		}
 	}
 	

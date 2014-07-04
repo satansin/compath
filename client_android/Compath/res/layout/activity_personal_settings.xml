@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.satansin.android.compath.PersonalSettingsActivity" >
-
+    
     <RelativeLayout
         android:id="@+id/mygroups_relative_layout"
         android:layout_width="match_parent"
@@ -136,5 +136,13 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="14dp" />
      -->
+
+    <ProgressBar
+        android:id="@+id/personal_settings_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>
