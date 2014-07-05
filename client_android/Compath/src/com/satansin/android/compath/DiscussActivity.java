@@ -208,6 +208,9 @@ public class DiscussActivity extends ActionBarActivity {
 			return true;
 		} else if (id == R.id.action_view_pics) {
 			// TODO
+			Intent intent = new Intent(DiscussActivity.this, GridViewActivity.class);
+			intent.putExtra("groupId", mGroupId);
+			startActivity(intent);
 		}
 		return super.onOptionsItemSelected(item);
 	}

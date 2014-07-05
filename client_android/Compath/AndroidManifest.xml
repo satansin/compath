@@ -141,6 +141,8 @@
             android:label="imageshower">
         </activity>
 
+        <activity android:name="com.satansin.android.compath.GalleryActivity"  android:label="GalleryActivity"  />  
+		<activity android:name="com.satansin.android.compath.GridViewActivity"  android:label="GridViewActivity" />       
         
     </application>
 
