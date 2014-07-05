@@ -309,7 +309,7 @@ public class FileHelper {
 	public Bitmap getLocalImage(String fileName, int quality) throws IOException {
 		File imgFile = getImageFile(fileName, quality);
     	if (!imgFile.exists()) {
-			throw new IOException();
+			return null;
 		}
 		FileInputStream stream = new FileInputStream(imgFile);
 		Options options = new Options();

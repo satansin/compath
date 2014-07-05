@@ -5,7 +5,6 @@ import com.qiniu.api.net.Client;
 import com.qiniu.api.rs.GetPolicy;
 import com.qiniu.api.auth.AuthException;
 import com.qiniu.api.auth.digest.*;
-import com.qiniu.api.rs.*;
 
 public class ImageView {
 	/**
